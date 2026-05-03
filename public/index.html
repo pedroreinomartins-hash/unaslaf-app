@@ -714,13 +714,53 @@ function addFiles(inp){ for(const f of inp.files) pendingFiles.push(f); renderFi
 function renderFiles(){
   const el=document.getElementById('file-list');
   if(!pendingFiles.length){el.innerHTML='<div class="empty">Nenhum arquivo selecionado</div>';return;}
-  el.innerHTML=pendingFiles.map(f=>`<div class="file-row"><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9 1.5H3.5A1.5 1.5 0 002 3v10a1.5 1.5 0 001.5 1.5h9A1.5 1.5 0 0014 13V6l-5-4.5z" stroke="#185FA5" stroke-width="1.2"/></svg><span class="file-name">${f.name}</span><span class="file-size">${(f.size/1024).toFixed(0)} KB</span><span class="file-tag">Pronto</span></div>`).join('');
+  el.innerHTML=pendingFiles.map((f,i)=>`
+    <div class="file-row" id="file-row-${i}">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9 1.5H3.5A1.5 1.5 0 002 3v10a1.5 1.5 0 001.5 1.5h9A1.5 1.5 0 0014 13V6l-5-4.5z" stroke="#185FA5" stroke-width="1.2"/></svg>
+      <span class="file-name">${f.name}</span>
+      <span class="file-size">${(f.size/1024).toFixed(0)} KB</span>
+      <span class="file-tag" id="file-tag-${i}">Pronto</span>
+    </div>`).join('');
 }
-function uploadDrive(){
+
+async function uploadDrive(){
   if(!pendingFiles.length){toast('Selecione ao menos um arquivo','err');return;}
-  toast(`Enviando ${pendingFiles.length} arquivo(s)...`);
-  pendingFiles.forEach(f=>addHist('arq',f.name));
-  setTimeout(()=>{ toast(`${pendingFiles.length} arquivo(s) enviado(s)!`,'ok'); pendingFiles=[]; renderFiles(); },1500);
+  const desc = document.getElementById('f-desc').value || 'sem descrição';
+
+  // Monta FormData com todos os arquivos + metadados
+  const formData = new FormData();
+  pendingFiles.forEach((f, i) => {
+    // Renomeia o arquivo incluindo CPF, data e descrição
+    const dt = new Date().toISOString().slice(0,10);
+    const ext = f.name.split('.').pop();
+    const newName = `${user.cpf}_${dt}_${desc.slice(0,20).replace(/\s+/g,'_')}_${i+1}.${ext}`;
+    formData.append('files', f, newName);
+    // Atualiza tag visual
+    const tag = document.getElementById('file-tag-'+i);
+    if(tag){ tag.textContent='Enviando...'; tag.style.background='var(--warn-bg)'; tag.style.color='var(--warn-text)'; }
+  });
+
+  toast(`Enviando ${pendingFiles.length} arquivo(s) ao Drive...`);
+
+  try{
+    const r = await fetch('/api/upload', { method:'POST', body: formData });
+    const d = await r.json();
+
+    if(d.success){
+      toast(`${d.uploaded.length} arquivo(s) enviado(s) com sucesso!`, 'ok');
+      d.uploaded.forEach((u,i)=>{
+        const tag = document.getElementById('file-tag-'+i);
+        if(tag){ tag.textContent='Enviado ✓'; tag.style.background='var(--green-bg)'; tag.style.color='var(--green-text)'; }
+        addHist('arq', u.filename);
+      });
+      setTimeout(()=>{ pendingFiles=[]; renderFiles(); document.getElementById('f-desc').value=''; }, 2000);
+    } else {
+      toast('Erro ao enviar: ' + (d.error||'tente novamente'), 'err');
+    }
+  } catch(e){
+    toast('Erro ao conectar com o servidor', 'err');
+    console.error(e);
+  }
 }
 
 // ── CONSULTA ────────────────────────────────────────────────
