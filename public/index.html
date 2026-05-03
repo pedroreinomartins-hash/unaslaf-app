@@ -467,7 +467,7 @@ AÇÕES COLETIVAS EM ANDAMENTO:
 ORIENTAÇÕES: Responda sempre em português brasileiro, linguagem clara e acolhedora. Para dúvidas sobre processos individuais, oriente a usar a aba "Consulta Processual". Para atualização de dados, "Atualizar Cadastro". Para documentos, "Enviar Documentos". Se não souber algo, indique o site unaslaf.org.br.`;
 
 // ── ESTADO ──────────────────────────────────────────────────
-let user = {cpf:'',cpfFmt:'',name:'',phone:''};
+let user = {cpf:'',cpfFmt:'',name:'',phone:'',data:[]};
 let vCode = '';
 let sit = 'Ativo';
 let pendingFiles = [];
@@ -547,7 +547,11 @@ async function doLookup(){
       for(let i=1;i<rows.length;i++){
         const c=rows[i]; if(!c||c.length<3) continue;
         if((c[2]||'').replace(/\D/g,'')===raw){
-          found=true; foundName=(c[1]||'').trim(); foundPhone=(c[5]||'').replace(/\D/g,''); break;
+          found=true;
+          foundName=(c[1]||'').trim();
+          foundPhone=(c[5]||'').replace(/\D/g,'');
+          user.data = c; // salva linha completa
+          break;
         }
       }
     }
@@ -618,11 +622,24 @@ function loginSuccess(){
   const first=user.name.split(' ')[0]||'Associado';
   document.getElementById('top-name').textContent=first;
   document.getElementById('top-cpf').textContent=user.cpfFmt;
-  document.getElementById('f-cpf').value=user.cpfFmt;
-  document.getElementById('c-cpf').value=user.cpfFmt;
-  document.getElementById('f-nome').value=user.name;
-  document.getElementById('c-nome').value=user.name;
-  if(user.phone) document.getElementById('f-tel').value=user.phone.replace('55','').replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3');
+
+  // Preenche campos do cadastro com todos os dados da planilha
+  document.getElementById('f-cpf').value    = user.cpfFmt;
+  document.getElementById('f-nome').value   = user.data[1]  || '';
+  document.getElementById('f-siape').value  = user.data[0]  || '';
+  document.getElementById('f-cargo').value  = user.data[3]  || '';
+  document.getElementById('f-tel').value    = user.data[5]  ? user.data[5].replace('55','').replace(/(\d{2})(\d{5})(\d{4})/,'($1) $2-$3') : '';
+  document.getElementById('f-email').value  = user.data[6]  || '';
+  document.getElementById('f-end').value    = user.data[7]  || '';
+  document.getElementById('f-cidade').value = user.data[8]  || '';
+  const uf = user.data[9] || '';
+  document.getElementById('f-uf').value     = uf.toUpperCase();
+  setSit(user.data[4] || 'Ativo');
+
+  // Preenche campo de nome na consulta processual
+  document.getElementById('c-cpf').value    = user.cpfFmt;
+  document.getElementById('c-nome').value   = user.data[1]  || '';
+
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').style.display='flex';
   addBotMsg(`Olá, ${first}! Identidade verificada com sucesso ✓\n\nSou o atendente virtual da Unaslaf. Estou aqui para ajudar com informações sobre a associação, consultas processuais, atualização de cadastro e envio de documentos.\n\nComo posso ajudar você hoje?`);
