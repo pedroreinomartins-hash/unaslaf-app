@@ -6,21 +6,29 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { phone, message } = req.body;
-  const instance = process.env.ZAPI_INSTANCE;
-  const token    = process.env.ZAPI_TOKEN;
-  const client   = process.env.ZAPI_CLIENT_TOKEN || '';
+  const instance    = process.env.ZAPI_INSTANCE;
+  const token       = process.env.ZAPI_TOKEN;
+  const clientToken = process.env.ZAPI_CLIENT_TOKEN;
 
   try {
-    const headers = { 'Content-Type': 'application/json' };
-    if (client) headers['client-token'] = client;
-
     const response = await fetch(
       `https://api.z-api.io/instances/${instance}/token/${token}/send-text`,
-      { method: 'POST', headers, body: JSON.stringify({ phone, message }) }
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'client-token': clientToken,
+        },
+        body: JSON.stringify({ phone, message }),
+      }
     );
+
     const data = await response.json();
+    console.log('Z-API response:', JSON.stringify(data));
     return res.status(response.status).json(data);
+
   } catch (err) {
+    console.error('Z-API error:', err.message);
     return res.status(500).json({ error: err.message });
   }
 }
