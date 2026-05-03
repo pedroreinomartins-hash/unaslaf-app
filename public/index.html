@@ -410,7 +410,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div class="form-actions">
           <button class="btn-sec" onclick="clearCad()">Limpar</button>
           <button class="btn-primary" style="max-width:220px;" onclick="saveCad()">
-            <span id="cad-btn-lbl">Salvar no Google Sheets</span>
+            <span id="cad-btn-lbl">Salvar Cadastro Atualizado</span>
           </button>
         </div>
       </div>
@@ -696,13 +696,47 @@ function setSit(v){
 
 // ── CADASTRO ────────────────────────────────────────────────
 async function saveCad(){
-  const nome=document.getElementById('f-nome').value;
-  if(!nome){toast('Informe o nome','err');return;}
-  const lbl=document.getElementById('cad-btn-lbl');
-  lbl.innerHTML='<div class="spinner"></div> Salvando...';
-  // Aqui você pode chamar um Apps Script endpoint para gravar na planilha
-  // await fetch('/api/save-cad', {method:'POST', ...})
-  setTimeout(()=>{ lbl.textContent='Salvar no Google Sheets'; toast('Cadastro salvo com sucesso!','ok'); addHist('cad','Cadastro: '+nome); },1200);
+  const nome = document.getElementById('f-nome').value;
+  if(!nome){ toast('Informe o nome completo','err'); return; }
+
+  const lbl = document.getElementById('cad-btn-lbl');
+  lbl.innerHTML = '<div class="spinner"></div> Salvando...';
+
+  // Monta linha na ordem exata das colunas da planilha:
+  // Matricula SIAPE | Nome | CPF | Cargo | Situação Funcional | Telefone | E-mail | Endereço | Cidade | UF | Data Atualização
+  const row = [
+    document.getElementById('f-siape').value,
+    nome,
+    document.getElementById('f-cpf').value,
+    document.getElementById('f-cargo').value,
+    sit,
+    document.getElementById('f-tel').value,
+    document.getElementById('f-email').value,
+    document.getElementById('f-end').value,
+    document.getElementById('f-cidade').value,
+    document.getElementById('f-uf').value,
+  ];
+
+  try {
+    const r = await fetch('/api/cadastro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ row }),
+    });
+    const d = await r.json();
+    lbl.textContent = 'Salvar no Google Sheets';
+
+    if(d.success){
+      toast('Cadastro salvo com sucesso!', 'ok');
+      addHist('cad', 'Cadastro atualizado: ' + nome);
+    } else {
+      toast('Erro ao salvar: ' + (d.error || 'tente novamente'), 'err');
+    }
+  } catch(e) {
+    lbl.textContent = 'Salvar no Google Sheets';
+    toast('Erro ao conectar com o servidor', 'err');
+    console.error(e);
+  }
 }
 function clearCad(){
   ['f-siape','f-cargo','f-tel','f-email','f-end','f-cidade'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
