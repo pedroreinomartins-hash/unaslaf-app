@@ -1,13 +1,14 @@
-// Palavras-chave que indicam consulta processual
-const PROCESSUAL_REGEX = /process|ação coletiva|causa|trf|cnj|stj|stf|lista|nome.*process|process.*nome|advogad|juiz|sentença|decisão|recurso|mandado|liminar|tutela|execução|penhora|audiência|julgamento|habeas|impetrar|petição|contestação|agravo|apelação|embargo|precatório|rpv|cumprimento de sentença/i;
-
-// Cache simples do contexto do Drive (5 minutos)
+// Cache do contexto do Drive (10 minutos)
 let contextCache = { text: '', ts: 0 };
-const CACHE_TTL  = 5 * 60 * 1000;
+const CACHE_TTL  = 10 * 60 * 1000;
+
+// Palavras que disparam busca web adicional
+const BUSCA_WEB_REGEX = /notícia|noticia|recente|último|ultima|hoje|esta semana|novo|nova|atualiz/i;
 
 async function getDriveContext(baseUrl) {
   const now = Date.now();
   if (contextCache.text && (now - contextCache.ts) < CACHE_TTL) {
+    console.log('Contexto Drive: usando cache');
     return contextCache.text;
   }
   try {
@@ -58,7 +59,7 @@ async function standardAnswer(openaiMessages) {
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
-      max_tokens: 1500,
+      max_tokens: 2000,
       messages: openaiMessages,
     }),
   });
@@ -77,25 +78,34 @@ export default async function handler(req, res) {
 
   const { messages, system, userName, userCpf, baseUrl } = req.body;
 
-  // Carrega contexto dos documentos do Drive
+  // Carrega contexto do Drive SEMPRE — é a base de conhecimento principal
   const driveContext = baseUrl ? await getDriveContext(baseUrl) : '';
 
-  // Monta system prompt completo
+  // Limita o contexto do Drive a 20k chars para não estourar o token limit
+  // Prioriza o início do arquivo (onde estão as regras e ações coletivas)
+  const driveContextLimited = driveContext.length > 20000
+    ? driveContext.slice(0, 20000) + '\n\n[... contexto truncado por limite de tamanho ...]'
+    : driveContext;
+
   const systemFull = `${system || ''}
 
-DADOS DO ASSOCIADO AUTENTICADO:
+DADOS DO ASSOCIADO AUTENTICADO NESTA SESSÃO:
 - Nome: ${userName || 'não informado'}
 - CPF: ${userCpf || 'não informado'}
 
-${driveContext ? `DOCUMENTOS E ARQUIVOS DE CONTEXTO DA UNASLAF (use para responder perguntas específicas):
-${driveContext}` : ''}
+${driveContextLimited ? `========================================
+BASE DE CONHECIMENTO UNASLAF (FONTE PRIMÁRIA):
+Use PRIORITARIAMENTE estas informações para responder. Elas vêm dos documentos oficiais da UNASLAF.
+========================================
+${driveContextLimited}
+========================================` : ''}
 
-INSTRUÇÕES PARA CONSULTA PROCESSUAL:
-Quando perguntado sobre processos, listas ou ações judiciais:
-1. Primeiro verifique nos documentos de contexto acima se o nome ou CPF do associado aparece
-2. Analise se o perfil se encaixa nas ações coletivas da UNASLAF descritas
-3. Oriente como verificar pessoalmente em https://processual.trf1.jus.br e https://datajud-wiki.cnj.jus.br
-4. Seja específico e objetivo na resposta`;
+INSTRUÇÕES GERAIS:
+1. Use SEMPRE a base de conhecimento acima como fonte principal de respostas
+2. Quando perguntar sobre ações coletivas, liste TODAS as ações mencionadas nos documentos acima
+3. Quando o associado perguntar se está em alguma lista, verifique o CPF/nome nos documentos
+4. Para perguntas sobre processos judiciais, inclua sempre o aviso obrigatório de orientação não oficial
+5. Responda em português brasileiro, linguagem clara e acolhedora`;
 
   const openaiMessages = [
     { role: 'system', content: systemFull },
@@ -104,15 +114,16 @@ Quando perguntado sobre processos, listas ou ações judiciais:
 
   try {
     const lastMsg = messages[messages.length - 1]?.content || '';
-    const isProcessual = PROCESSUAL_REGEX.test(lastMsg);
+    const precisaBuscaWeb = BUSCA_WEB_REGEX.test(lastMsg);
 
     let text = '';
 
-    if (isProcessual) {
-      console.log('Modo processual + Drive ativado');
+    if (precisaBuscaWeb) {
+      console.log('Busca web ativada para:', lastMsg.slice(0, 60));
       text = await searchAndAnswer(openaiMessages);
       if (!text) text = await standardAnswer(openaiMessages);
     } else {
+      // Usa contexto do Drive + conhecimento base (sem busca web desnecessária)
       text = await standardAnswer(openaiMessages);
     }
 
