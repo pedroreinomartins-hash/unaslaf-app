@@ -891,19 +891,40 @@ async function doConsulta(){
   const lbl=document.getElementById('c-btn-lbl');
   lbl.innerHTML='<div class="spinner"></div>';
 
-  // Mapa de tribunais para URL e nome completo
   const tribMap = {
     trf1: { nome:'TRF1 — 1ª Região', url:'https://processual.trf1.jus.br/consultaProcessual/processo.php' },
     trf2: { nome:'TRF2 — 2ª Região', url:'https://portal.trf2.jus.br/portal/consulta/cons_proc.asp' },
     trf3: { nome:'TRF3 — 3ª Região', url:'https://web.trf3.jus.br/base-textual' },
     trf4: { nome:'TRF4 — 4ª Região', url:'https://www.trf4.jus.br/trf4/processos/acompanhamento/consulta_processual.php' },
-    trf5: { nome:'TRF5 — 5ª Região', url:'https://www.trf5.jus.br/Jurisprudencia/JurisServlet' },
+    trf5: { nome:'TRF5 — 5ª Região', url:'https://www.trf5.jus.br' },
     trf6: { nome:'TRF6 — 6ª Região', url:'https://www.trf6.jus.br' },
-    stj:  { nome:'STJ — Superior Tribunal de Justiça', url:'https://processo.stj.jus.br/processo/pesquisa/' },
-    stf:  { nome:'STF — Supremo Tribunal Federal', url:'https://portal.stf.jus.br/processos/' },
+    stj:  { nome:'STJ', url:'https://processo.stj.jus.br/processo/pesquisa/' },
+    stf:  { nome:'STF', url:'https://portal.stf.jus.br/processos/' },
   };
-
   const tribInfo = tribMap[trib] || tribMap['trf1'];
+
+  // Etapa 1: Consulta real no portal do tribunal
+  let dadosReais = null;
+  try {
+    const rc = await fetch('/api/consulta', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        cpf: cpf.replace(/\D/g,''),
+        nome,
+        tribunal: trib,
+        numProcesso: num || '',
+      }),
+    });
+    if (rc.ok) dadosReais = await rc.json();
+  } catch(e) {
+    console.warn('Consulta portal falhou:', e.message);
+  }
+
+  // Etapa 2: IA interpreta os dados reais + contexto UNASLAF
+  const resumoPortal = dadosReais?.resumo
+    ? `\nRESULTADO DA CONSULTA REAL NO PORTAL DO ${tribInfo.nome}:\n${dadosReais.resumo}\nURL consultada: ${dadosReais.portalUrl}`
+    : `\nNota: não foi possível consultar o portal do ${tribInfo.nome} diretamente (pode exigir autenticação ou CAPTCHA). Oriente o associado a acessar ${tribInfo.url} manualmente.`;
 
   const prompt = `Você é um assistente jurídico especializado em processos da Justiça Federal brasileira.
 
@@ -911,7 +932,8 @@ ASSOCIADO AUTENTICADO:
 - Nome: ${nome}
 - CPF: ${cpf}
 - Processo nº: ${num || 'não informado'}
-- Tribunal selecionado: ${tribInfo.nome}
+- Tribunal: ${tribInfo.nome}
+${resumoPortal}
 
 CONTEXTO UNASLAF — Ações coletivas:
 1. Adicional de Fronteira — 1022299-41.2018.4.01.3400 (TRF1) — mérito pendente
@@ -919,13 +941,13 @@ CONTEXTO UNASLAF — Ações coletivas:
 3. ADI 4151 — STF — VITÓRIA UNÂNIME 10x0 em abril/2026
 4. PASEP — 0727740-19.2020.8.07.0001 — improcedente (março/2026)
 
-Responda OBRIGATORIAMENTE começando com este aviso:
+Responda OBRIGATORIAMENTE começando com:
 "⚠️ Aviso: As informações fornecidas têm caráter orientativo e não oficial. Não substituem a consulta aos canais oficiais, a assessoria jurídica especializada ou as autoridades competentes."
 
 Depois responda em 3 blocos:
-1) Análise: como o perfil do associado se relaciona com as ações coletivas da UNASLAF e possíveis direitos
-2) Como consultar pessoalmente no ${tribInfo.nome} em: ${tribInfo.url}
-3) Próximos passos recomendados — incluindo orientação para buscar o jurídico da UNASLAF para análise individual`;
+1) Resultado da consulta: interprete os dados reais obtidos no portal (se houver) e como o perfil do associado se relaciona com as ações coletivas da UNASLAF
+2) Como consultar pessoalmente em: ${tribInfo.url} — informe o passo a passo para buscar pelo CPF e pelo CNPJ da UNASLAF (73.369.795/0001-83)
+3) Próximos passos — oriente a buscar o jurídico da UNASLAF para análise individual em unaslaf.org.br`;
 
   try{
     const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
