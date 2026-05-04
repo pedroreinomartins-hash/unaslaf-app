@@ -410,7 +410,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div class="form-actions">
           <button class="btn-sec" onclick="clearCad()">Limpar</button>
           <button class="btn-primary" style="max-width:220px;" onclick="saveCad()">
-            <span id="cad-btn-lbl">Salvar Cadastro Atualizado</span>
+            <span id="cad-btn-lbl">Salvar no Google Sheets</span>
           </button>
         </div>
       </div>
@@ -684,10 +684,16 @@ async function sendMsg(){
   try{
     const r=await fetch('/api/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:CTX,messages:convHist})
+      body:JSON.stringify({
+        system:CTX,
+        messages:convHist,
+        userName: user.name,
+        userCpf: user.cpfFmt,
+        baseUrl: window.location.origin,
+      })
     });
     const d=await r.json(); hideTyping();
-    const reply=d.content?.[0]?.text||'Não foi possível obter resposta.';
+    const reply=d.content?.[0]?.text||d.error||'Não foi possível obter resposta.';
     addBotMsg(reply); convHist.push({role:'assistant',content:reply}); addHist('chat',text.slice(0,70));
   }catch(e){ hideTyping(); addBotMsg('Erro ao conectar com o servidor. Tente novamente.'); }
 }
@@ -823,7 +829,13 @@ async function doConsulta(){
   const lbl=document.getElementById('c-btn-lbl'); lbl.innerHTML='<div class="spinner"></div>';
   const prompt=`Você é um assistente jurídico especializado em processos da Justiça Federal. Analise: Nome: ${nome||'não informado'} | CPF: ${document.getElementById('c-cpf').value} | Processo nº: ${num||'não informado'} | Tribunal: TRF1 e CNJ/DataJud. Contexto: Associado da UNASLAF. Ações ativas: Adicional de Fronteira (1022299-41.2018.4.01.3400-TRF1), Jornada/Abono (1024043-71.2018.4.01.3400-TRF1), ADI 4151 STF (vitória 10x0/abril 2026), PASEP (improcedente/março 2026). Responda em 3 blocos: 1) Análise do perfil e relação com as ações da UNASLAF; 2) Como consultar pessoalmente em https://processual.trf1.jus.br e https://datajud-wiki.cnj.jus.br; 3) Próximos passos recomendados.`;
   try{
-    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      system:CTX,
+      messages:[{role:'user',content:prompt}],
+      userName: user.name,
+      userCpf: user.cpfFmt,
+      baseUrl: window.location.origin,
+    })});
     const d=await r.json();
     document.getElementById('c-loading').style.display='none'; lbl.textContent='Consultar via IA';
     document.getElementById('c-result').style.display='block';
