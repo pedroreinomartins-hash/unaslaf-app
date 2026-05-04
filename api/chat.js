@@ -81,10 +81,10 @@ export default async function handler(req, res) {
   // Carrega contexto do Drive SEMPRE — é a base de conhecimento principal
   const driveContext = baseUrl ? await getDriveContext(baseUrl) : '';
 
-  // Limita o contexto do Drive a 20k chars para não estourar o token limit
+  // Limita o contexto do Drive a 60k chars para não estourar o token limit
   // Prioriza o início do arquivo (onde estão as regras e ações coletivas)
-  const driveContextLimited = driveContext.length > 20000
-    ? driveContext.slice(0, 20000) + '\n\n[... contexto truncado por limite de tamanho ...]'
+  const driveContextLimited = driveContext.length > 60000
+    ? driveContext.slice(0, 60000) + '\n\n[... contexto truncado por limite de tamanho ...]'
     : driveContext;
 
   const systemFull = `${system || ''}
