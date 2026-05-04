@@ -61,34 +61,29 @@ async function readFile(file, token) {
   const mime = file.mimeType;
 
   if (mime === 'application/vnd.google-apps.document') {
-    // Google Docs → exporta como texto
     url = `https://www.googleapis.com/drive/v3/files/${file.id}/export?mimeType=text/plain`;
   } else if (mime === 'application/vnd.google-apps.spreadsheet') {
-    // Google Sheets → exporta como CSV
     url = `https://www.googleapis.com/drive/v3/files/${file.id}/export?mimeType=text/csv`;
-  } else if (mime === 'application/pdf') {
-    // PDF → exporta como texto via Google Drive (funciona para PDFs com texto)
-    url = `https://www.googleapis.com/drive/v3/files/${file.id}/export?mimeType=text/plain`;
-    // Se falhar, tenta download direto
   } else {
-    // txt, csv, doc, xls → download direto
+    // txt, csv, xlsx, doc — download direto
     url = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`;
   }
 
   try {
     const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) {
-      // Fallback: tenta download direto
-      const res2 = await fetch(
-        `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (!res2.ok) return null;
-      const text = await res2.text();
-      return text.slice(0, 8000); // limita para não estourar o contexto
-    }
+    if (!res.ok) return null;
     const text = await res.text();
-    return text.slice(0, 8000);
+
+    // Verifica se o conteúdo é legível (não binário)
+    // Rejeita se mais de 20% dos caracteres forem não-imprimíveis
+    const nonPrintable = (text.match(/[\x00-\x08\x0E-\x1F\x7F-\x9F]/g) || []).length;
+    const ratio = nonPrintable / text.length;
+    if (ratio > 0.05) {
+      console.log(`Arquivo ${file.name} ignorado — conteúdo binário (${(ratio*100).toFixed(0)}% não-imprimível)`);
+      return null;
+    }
+
+    return text.slice(0, 10000); // até 10k chars por arquivo
   } catch (e) {
     console.warn(`Erro ao ler ${file.name}:`, e.message);
     return null;
