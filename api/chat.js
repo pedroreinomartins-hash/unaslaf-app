@@ -1,28 +1,14 @@
-// Cache do contexto do Drive (10 minutos)
-let contextCache = { text: '', ts: 0 };
-const CACHE_TTL  = 10 * 60 * 1000;
+import { buildContextString, findRelevantDocs } from './context-static.js';
 
-// Palavras que disparam busca web adicional
-const BUSCA_WEB_REGEX = /notícia|noticia|recente|último|ultima|hoje|esta semana|novo|nova|atualiz/i;
-
-async function getDriveContext(baseUrl) {
-  const now = Date.now();
-  if (contextCache.text && (now - contextCache.ts) < CACHE_TTL) {
-    console.log('Contexto Drive: usando cache');
-    return contextCache.text;
-  }
-  try {
-    const res = await fetch(`${baseUrl}/api/context`);
-    if (!res.ok) return '';
-    const data = await res.json();
-    contextCache = { text: data.context || '', ts: now };
-    console.log(`Contexto Drive carregado: ${data.filesRead} arquivos, ${contextCache.text.length} chars`);
-    return contextCache.text;
-  } catch (e) {
-    console.warn('Erro ao carregar contexto Drive:', e.message);
-    return '';
-  }
+// Cache do contexto completo (construído uma vez)
+let _fullContext = null;
+function getFullContext() {
+  if (!_fullContext) _fullContext = buildContextString();
+  return _fullContext;
 }
+
+// Palavras que disparam busca web (notícias recentes)
+const BUSCA_WEB_REGEX = /notícia|noticia|recente|último|ultima|hoje|esta semana|atualiz|novidade/i;
 
 async function searchAndAnswer(openaiMessages) {
   const res = await fetch('https://api.openai.com/v1/responses', {
@@ -38,16 +24,14 @@ async function searchAndAnswer(openaiMessages) {
       input: openaiMessages,
     }),
   });
-
   if (!res.ok) return null;
   const data = await res.json();
-  const text = data.output
+  return data.output
     ?.filter(o => o.type === 'message')
     ?.flatMap(o => o.content || [])
     ?.filter(c => c.type === 'output_text')
     ?.map(c => c.text)
-    ?.join('') || '';
-  return text || null;
+    ?.join('') || null;
 }
 
 async function standardAnswer(openaiMessages) {
@@ -63,7 +47,6 @@ async function standardAnswer(openaiMessages) {
       messages: openaiMessages,
     }),
   });
-
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || 'OpenAI error');
   return data.choices?.[0]?.message?.content || '';
@@ -76,36 +59,28 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { messages, system, userName, userCpf, baseUrl } = req.body;
+  const { messages, system, userName, userCpf } = req.body;
+  const lastMsg = messages?.[messages.length - 1]?.content || '';
 
-  // Carrega contexto do Drive SEMPRE — é a base de conhecimento principal
-  const driveContext = baseUrl ? await getDriveContext(baseUrl) : '';
-
-  // Limita o contexto do Drive a 60k chars para não estourar o token limit
-  // Prioriza o início do arquivo (onde estão as regras e ações coletivas)
-  const driveContextLimited = driveContext.length > 60000
-    ? driveContext.slice(0, 60000) + '\n\n[... contexto truncado por limite de tamanho ...]'
-    : driveContext;
+  // Busca documentos mais relevantes para a pergunta (RAG simples)
+  const relevantDocs = findRelevantDocs(lastMsg);
+  const relevantContext = relevantDocs.length > 0
+    ? relevantDocs.map(d => `===== ${d.title.toUpperCase()} =====\n${d.content}`).join('\n\n')
+    : getFullContext().slice(0, 30000);
 
   const systemFull = `${system || ''}
 
-DADOS DO ASSOCIADO AUTENTICADO NESTA SESSÃO:
+DADOS DO ASSOCIADO AUTENTICADO:
 - Nome: ${userName || 'não informado'}
 - CPF: ${userCpf || 'não informado'}
 
-${driveContextLimited ? `========================================
-BASE DE CONHECIMENTO UNASLAF (FONTE PRIMÁRIA):
-Use PRIORITARIAMENTE estas informações para responder. Elas vêm dos documentos oficiais da UNASLAF.
 ========================================
-${driveContextLimited}
-========================================` : ''}
+BASE DE CONHECIMENTO UNASLAF (FONTE PRIMÁRIA — USE PARA RESPONDER):
+========================================
+${relevantContext}
+========================================
 
-INSTRUÇÕES GERAIS:
-1. Use SEMPRE a base de conhecimento acima como fonte principal de respostas
-2. Quando perguntar sobre ações coletivas, liste TODAS as ações mencionadas nos documentos acima
-3. Quando o associado perguntar se está em alguma lista, verifique o CPF/nome nos documentos
-4. Para perguntas sobre processos judiciais, inclua sempre o aviso obrigatório de orientação não oficial
-5. Responda em português brasileiro, linguagem clara e acolhedora`;
+INSTRUÇÃO: Use PRIORITARIAMENTE os documentos acima para responder. Quando perguntado sobre ações coletivas, liste TODAS as ações disponíveis nos documentos. Quando o associado perguntar se está em alguma lista, verifique o CPF/nome nos documentos de portarias e listas.`;
 
   const openaiMessages = [
     { role: 'system', content: systemFull },
@@ -113,22 +88,15 @@ INSTRUÇÕES GERAIS:
   ];
 
   try {
-    const lastMsg = messages[messages.length - 1]?.content || '';
-    const precisaBuscaWeb = BUSCA_WEB_REGEX.test(lastMsg);
-
     let text = '';
-
-    if (precisaBuscaWeb) {
-      console.log('Busca web ativada para:', lastMsg.slice(0, 60));
+    if (BUSCA_WEB_REGEX.test(lastMsg)) {
+      console.log('Busca web ativada');
       text = await searchAndAnswer(openaiMessages);
       if (!text) text = await standardAnswer(openaiMessages);
     } else {
-      // Usa contexto do Drive + conhecimento base (sem busca web desnecessária)
       text = await standardAnswer(openaiMessages);
     }
-
     return res.status(200).json({ content: [{ type: 'text', text }] });
-
   } catch (err) {
     console.error('Chat error:', err.message);
     return res.status(500).json({ error: err.message });
