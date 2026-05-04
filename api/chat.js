@@ -62,11 +62,20 @@ export default async function handler(req, res) {
   const { messages, system, userName, userCpf } = req.body;
   const lastMsg = messages?.[messages.length - 1]?.content || '';
 
-  // Busca documentos mais relevantes para a pergunta (RAG simples)
-  const relevantDocs = findRelevantDocs(lastMsg);
-  const relevantContext = relevantDocs.length > 0
-    ? relevantDocs.map(d => `===== ${d.title.toUpperCase()} =====\n${d.content}`).join('\n\n')
-    : getFullContext().slice(0, 30000);
+    // Detecta se é pergunta sobre todas as ações coletivas
+  const isListaAcoes = /todas.*ações|ações coletivas|lista.*ações|quais.*ações|ações.*unaslaf|ações.*patrocinadas/i.test(lastMsg);
+
+  let relevantContext;
+  if (isListaAcoes) {
+    // Retorna TODOS os documentos — índice + todas as 15 ações
+    relevantContext = getFullContext();
+  } else {
+    // RAG normal: busca os documentos mais relevantes
+    const relevantDocs = findRelevantDocs(lastMsg, 10);
+    relevantContext = relevantDocs.length > 0
+      ? relevantDocs.map(d => `===== ${d.title.toUpperCase()} =====\n${d.content}`).join('\n\n')
+      : getFullContext().slice(0, 40000);
+  }
 
   const systemFull = `${system || ''}
 
@@ -80,7 +89,10 @@ BASE DE CONHECIMENTO UNASLAF (FONTE PRIMÁRIA — USE PARA RESPONDER):
 ${relevantContext}
 ========================================
 
-INSTRUÇÃO: Use PRIORITARIAMENTE os documentos acima para responder. Quando perguntado sobre ações coletivas, liste TODAS as ações disponíveis nos documentos. Quando o associado perguntar se está em alguma lista, verifique o CPF/nome nos documentos de portarias e listas.`;
+INSTRUÇÃO CRÍTICA: Use PRIORITARIAMENTE os documentos acima para responder.
+- Quando perguntado sobre ações coletivas, liste TODAS as ações presentes nos documentos acima com número do processo e status — não resuma nem omita nenhuma.
+- Quando o associado perguntar se está em alguma lista, verifique o CPF/nome nos documentos de portarias.
+- Mantenha linguagem clara, cordial e institucional.`;
 
   const openaiMessages = [
     { role: 'system', content: systemFull },
