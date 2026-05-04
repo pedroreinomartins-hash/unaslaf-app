@@ -1,57 +1,137 @@
-import { buildContextString, findRelevantDocs } from './context-static.js';
+import { DOCS } from './context-static.js';
 
-// Cache do contexto completo (construído uma vez)
-let _fullContext = null;
-function getFullContext() {
-  if (!_fullContext) _fullContext = buildContextString();
-  return _fullContext;
+// ── Índice resumido — enviado em TODAS as perguntas (~500 tokens) ──
+// Gerado uma vez a partir dos documentos estáticos
+let _indice = null;
+function getIndice() {
+  if (_indice) return _indice;
+  // Monta índice com título, categoria e primeiras 200 chars do conteúdo
+  _indice = DOCS.map(d => {
+    const resumo = d.content.split('\n')
+      .filter(l => l.trim())
+      .slice(0, 3)
+      .join(' ')
+      .slice(0, 200);
+    return `[${d.id}] ${d.title} | ${d.category} | ${resumo}...`;
+  }).join('\n');
+  return _indice;
 }
 
-// Palavras que disparam busca web (notícias recentes)
-const BUSCA_WEB_REGEX = /notícia|noticia|recente|último|ultima|hoje|esta semana|atualiz|novidade/i;
+// ── Detectores de intenção ──────────────────────────────────────
+const REGEX = {
+  listaAcoes:    /quais.*ações|todas.*ações|ações coletivas|lista.*ações|ações.*unaslaf|ações.*patrocinadas|processos.*unaslaf/i,
+  detalhesAcao:  /ação\s*\d+|adicional.*fronteira|jornada|abono.*ponto|geap|mp\s*873|auxílio.*transporte|covid|pasep|abono.*permanência|paridade|reposição.*erário|licença.*prêmio|irpf.*creche|quota.*creche|dobra.*teto|fronteira/i,
+  adi4151:       /adi\s*4151|adi4151|4151/i,
+  portaria:      /portaria|enquadramento|analista.*tributário|siape|redistribuído/i,
+  estatuto:      /estatuto|filiação|desfiliação|associado|mensalidade|sanção|penalidade|conselho/i,
+  regimento:     /regimento|eleição|delegado|chapa|votação|impugnação|assembleia/i,
+  lista28:       /28%|lista.*associado|ação.*28|ação dos 28/i,
+  buscaWeb:      /notícia|noticia|recente|último|ultima|hoje|esta semana|novidade/i,
+};
 
-async function searchAndAnswer(openaiMessages) {
+// ── Seleciona documentos relevantes por intenção ─────────────────
+function selectContext(msg) {
+  const m = msg.toLowerCase();
+
+  // Lista completa de ações → índice + todos os docs de ação
+  if (REGEX.listaAcoes.test(m)) {
+    const acoes = DOCS.filter(d => d.category === 'acoes_coletivas' || d.category === 'relatorio_acoes_indice');
+    return acoes.map(d => `===== ${d.title.toUpperCase()} =====\n${d.content}`).join('\n\n');
+  }
+
+  // ADI 4151
+  if (REGEX.adi4151.test(m)) {
+    return getDoc('adi_4151');
+  }
+
+  // Portarias / enquadramento / SIAPE
+  if (REGEX.portaria.test(m)) {
+    return getDoc('portaria_7243') + '\n\n' + getDoc('portaria_9546');
+  }
+
+  // Estatuto
+  if (REGEX.estatuto.test(m)) {
+    return getDoc('estatuto');
+  }
+
+  // Regimento eleitoral
+  if (REGEX.regimento.test(m)) {
+    return getDoc('regimento');
+  }
+
+  // Lista 28%
+  if (REGEX.lista28.test(m)) {
+    return getDoc('lista_28_pt1') + '\n\n' + getDoc('lista_28_pt2');
+  }
+
+  // Ação específica — detecta por palavras-chave
+  if (REGEX.detalhesAcao.test(m)) {
+    const map = {
+      'fronteira':       'acao_01',
+      'jornada':         'acao_02',
+      'abono.*ponto':    'acao_02',
+      'geap':            'acao_03',
+      'mp.*873':         'acao_04',
+      'transporte.*coletiva': 'acao_05',
+      'transporte.*grupo':    'acao_06',
+      'covid':           'acao_07',
+      'pasep':           'acao_08',
+      'abono.*permanência':   'acao_09',
+      'paridade':        'acao_10',
+      'reposição.*erário':    'acao_11',
+      'licença.*prêmio': 'acao_12',
+      'irpf.*creche':    'acao_13',
+      'quota.*creche':   'acao_14',
+      'dobra.*teto':     'acao_15',
+    };
+    for (const [pattern, id] of Object.entries(map)) {
+      if (new RegExp(pattern, 'i').test(m)) {
+        return getDoc(id);
+      }
+    }
+    // Ação por número
+    const numMatch = m.match(/ação\s*(\d+)/i);
+    if (numMatch) {
+      const id = `acao_${String(numMatch[1]).padStart(2, '0')}`;
+      const doc = DOCS.find(d => d.id === id);
+      if (doc) return `===== ${doc.title.toUpperCase()} =====\n${doc.content}`;
+    }
+  }
+
+  // Padrão: envia o índice (~500 tokens) — resposta genérica institucional
+  return `ÍNDICE DOS DOCUMENTOS DISPONÍVEIS:\n${getIndice()}\n\nINSTRUÇÃO: Se o associado pedir detalhes sobre um tema específico, indique que pode fornecer mais informações sobre qualquer item do índice acima.`;
+}
+
+function getDoc(id) {
+  const doc = DOCS.find(d => d.id === id);
+  if (!doc) return '';
+  return `===== ${doc.title.toUpperCase()} =====\n${doc.content}`;
+}
+
+// ── OpenAI ───────────────────────────────────────────────────────
+async function searchAndAnswer(msgs) {
   const res = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      tools: [{ type: 'web_search_preview' }],
-      tool_choice: 'auto',
-      input: openaiMessages,
-    }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
+    body: JSON.stringify({ model: 'gpt-4o-mini', tools: [{ type: 'web_search_preview' }], tool_choice: 'auto', input: msgs }),
   });
   if (!res.ok) return null;
   const data = await res.json();
-  return data.output
-    ?.filter(o => o.type === 'message')
-    ?.flatMap(o => o.content || [])
-    ?.filter(c => c.type === 'output_text')
-    ?.map(c => c.text)
-    ?.join('') || null;
+  return data.output?.filter(o => o.type === 'message')?.flatMap(o => o.content || [])?.filter(c => c.type === 'output_text')?.map(c => c.text)?.join('') || null;
 }
 
-async function standardAnswer(openaiMessages) {
+async function standardAnswer(msgs) {
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      max_tokens: 2000,
-      messages: openaiMessages,
-    }),
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
+    body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 2000, messages: msgs }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || 'OpenAI error');
   return data.choices?.[0]?.message?.content || '';
 }
 
+// ── Handler ──────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -62,20 +142,8 @@ export default async function handler(req, res) {
   const { messages, system, userName, userCpf } = req.body;
   const lastMsg = messages?.[messages.length - 1]?.content || '';
 
-    // Detecta se é pergunta sobre todas as ações coletivas
-  const isListaAcoes = /todas.*ações|ações coletivas|lista.*ações|quais.*ações|ações.*unaslaf|ações.*patrocinadas/i.test(lastMsg);
-
-  let relevantContext;
-  if (isListaAcoes) {
-    // Retorna TODOS os documentos — índice + todas as 15 ações
-    relevantContext = getFullContext();
-  } else {
-    // RAG normal: busca os documentos mais relevantes
-    const relevantDocs = findRelevantDocs(lastMsg, 10);
-    relevantContext = relevantDocs.length > 0
-      ? relevantDocs.map(d => `===== ${d.title.toUpperCase()} =====\n${d.content}`).join('\n\n')
-      : getFullContext().slice(0, 40000);
-  }
+  // Seleciona apenas o contexto relevante para a pergunta
+  const context = selectContext(lastMsg);
 
   const systemFull = `${system || ''}
 
@@ -84,25 +152,18 @@ DADOS DO ASSOCIADO AUTENTICADO:
 - CPF: ${userCpf || 'não informado'}
 
 ========================================
-BASE DE CONHECIMENTO UNASLAF (FONTE PRIMÁRIA — USE PARA RESPONDER):
+BASE DE CONHECIMENTO UNASLAF:
 ========================================
-${relevantContext}
+${context}
 ========================================
 
-INSTRUÇÃO CRÍTICA: Use PRIORITARIAMENTE os documentos acima para responder.
-- Quando perguntado sobre ações coletivas, liste TODAS as ações presentes nos documentos acima com número do processo e status — não resuma nem omita nenhuma.
-- Quando o associado perguntar se está em alguma lista, verifique o CPF/nome nos documentos de portarias.
-- Mantenha linguagem clara, cordial e institucional.`;
+Responda em português brasileiro, linguagem clara e cordial. NUNCA INVENTE INFORMAÇÕES, Use APENAS as informações acima. Se não tiver os detalhes solicitados, informe que pode pesquisar mais sobre o tema se o associado detalhar a dúvida.`;
 
-  const openaiMessages = [
-    { role: 'system', content: systemFull },
-    ...messages,
-  ];
+  const openaiMessages = [{ role: 'system', content: systemFull }, ...messages];
 
   try {
     let text = '';
-    if (BUSCA_WEB_REGEX.test(lastMsg)) {
-      console.log('Busca web ativada');
+    if (REGEX.buscaWeb.test(lastMsg)) {
       text = await searchAndAnswer(openaiMessages);
       if (!text) text = await standardAnswer(openaiMessages);
     } else {
