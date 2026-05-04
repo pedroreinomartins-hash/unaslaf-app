@@ -327,23 +327,29 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="panel" id="panel-consulta">
         <div class="panel-header">
           <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#185FA5" stroke-width="1.3"/><path d="M11.5 11.5L14 14" stroke="#185FA5" stroke-width="1.3" stroke-linecap="round"/></svg>
-          <span class="panel-header-title">Consulta Processual — TRF1 / CNJ</span>
+          <span class="panel-header-title">Consulta Processual</span>
           <span class="panel-badge ai">IA</span>
         </div>
         <div class="scroll-area">
-          <div class="info-box">A consulta usa inteligência artificial para analisar processos no TRF1 e DataJud/CNJ com base no perfil do associado autenticado.</div>
+          <div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:12px;color:#6D4C00;line-height:1.7;">
+            ⚠️ <strong>Aviso importante:</strong> As informações geradas por inteligência artificial têm caráter <strong>orientativo e não oficial</strong>. Não substituem a consulta aos canais oficiais de informação processual, a assessoria jurídica especializada ou as autoridades competentes. Utilize este recurso apenas como ponto de partida para direcionar sua pesquisa.
+          </div>
           <div class="fgrid" style="margin-bottom:12px;">
-            <div class="fgrp"><div class="form-label">Nome completo</div><input class="form-input" id="c-nome" placeholder="Nome para pesquisa" /></div>
-            <div class="fgrp"><div class="form-label">CPF</div><input class="form-input" id="c-cpf" readonly /></div>
+            <div class="fgrp"><div class="form-label">Nome completo</div><input class="form-input" id="c-nome" readonly style="color:var(--text2);cursor:default;" /></div>
+            <div class="fgrp"><div class="form-label">CPF</div><input class="form-input" id="c-cpf" readonly style="color:var(--text2);cursor:default;" /></div>
           </div>
           <div class="fgrid" style="margin-bottom:12px;">
             <div class="fgrp">
               <div class="form-label">Tribunal</div>
               <select class="form-select" id="c-trib">
-                <option value="trf1">TRF1 (prioritário)</option>
-                <option value="cnj">DataJud / CNJ</option>
-                <option value="stj">STJ</option>
-                <option value="stf">STF</option>
+                <option value="trf1">TRF1 — 1ª Região (DF, MG, BA, GO, MT, PA, AM e outros)</option>
+                <option value="trf2">TRF2 — 2ª Região (RJ, ES)</option>
+                <option value="trf3">TRF3 — 3ª Região (SP, MS)</option>
+                <option value="trf4">TRF4 — 4ª Região (RS, SC, PR)</option>
+                <option value="trf5">TRF5 — 5ª Região (PE, CE, AL, SE, PB, RN)</option>
+                <option value="trf6">TRF6 — 6ª Região (MG)</option>
+                <option value="stj">STJ — Superior Tribunal de Justiça</option>
+                <option value="stf">STF — Supremo Tribunal Federal</option>
               </select>
             </div>
             <div class="fgrp"><div class="form-label">Número do processo (opcional)</div><input class="form-input" id="c-num" placeholder="0000000-00.0000.0.00.0000" /></div>
@@ -353,10 +359,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           </button>
           <div id="c-loading" style="display:none;padding:20px 0;font-size:13px;color:var(--text2);">
             <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-            <span style="margin-left:8px;">Pesquisando no TRF1 e CNJ via IA...</span>
+            <span style="margin-left:8px;">Pesquisando via IA...</span>
           </div>
           <div id="c-result" style="display:none;">
             <div class="fsec-title" style="margin-bottom:12px;">Resultado da consulta</div>
+            <div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6D4C00;">
+              ⚠️ Resultado gerado por IA — caráter orientativo. Confirme sempre nos portais oficiais dos tribunais.
+            </div>
             <div id="c-result-body" style="font-size:14px;line-height:1.8;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;"></div>
           </div>
         </div>
@@ -410,7 +419,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
         <div class="form-actions">
           <button class="btn-sec" onclick="clearCad()">Limpar</button>
           <button class="btn-primary" id="cad-save-btn" style="max-width:220px;" onclick="saveCad()">
-            <span id="cad-btn-lbl">Salvar no Google Sheets</span>
+            <span id="cad-btn-lbl">Salvar Cadastro</span>
           </button>
         </div>
       </div>
@@ -463,6 +472,9 @@ AÇÕES COLETIVAS EM ANDAMENTO:
 2. Jornada/Abono de Ponto — MS 1024043-71.2018.4.01.3400 (TRF1/2ª Vara SJDF). Mandado de Segurança contra IN nº 02/2018 do MPDG sobre jornada de trabalho.
 3. ADI 4151 — STF. VITÓRIA UNÂNIME 10x0 em abril/2026! Transforma cargos de servidores ativos, aposentados e instituidores de pensão. Marco histórico para a categoria.
 4. PASEP — Processo 0727740-19.2020.8.07.0001 — Julgado improcedente (março/2026).
+
+AVISO OBRIGATÓRIO: Sempre que responder sobre processos judiciais, direitos, situação jurídica ou ações coletivas, inicie a resposta com este aviso em destaque:
+"⚠️ Aviso: As informações fornecidas têm caráter orientativo e não oficial. Não substituem a consulta aos canais oficiais de informação processual, a assessoria jurídica especializada ou as autoridades competentes. Utilize como ponto de partida para direcionar sua pesquisa nos canais oficiais."
 
 ORIENTAÇÕES: Responda sempre em português brasileiro, linguagem clara e acolhedora. Para dúvidas sobre processos individuais, oriente a usar a aba "Consulta Processual". Para atualização de dados, "Atualizar Cadastro". Para documentos, "Enviar Documentos". Se não souber algo, indique o site unaslaf.org.br.`;
 
@@ -720,16 +732,32 @@ function setSit(v){
 
 // ── CADASTRO ────────────────────────────────────────────────
 function validateCad() {
-  const nome  = document.getElementById('f-nome').value.trim();
-  const cpf   = document.getElementById('f-cpf').value.trim();
-  const email = document.getElementById('f-email').value.trim();
-  const tel   = document.getElementById('f-tel').value.trim();
-  const btn   = document.getElementById('cad-save-btn');
+  const campos = [
+    { id: 'f-nome',  val: document.getElementById('f-nome')?.value.trim() },
+    { id: 'f-email', val: document.getElementById('f-email')?.value.trim() },
+    { id: 'f-tel',   val: document.getElementById('f-tel')?.value.trim() },
+  ];
 
-  const ok = nome && cpf && email && tel;
-  btn.disabled = !ok;
-  btn.style.opacity = ok ? '1' : '0.5';
-  btn.style.cursor  = ok ? 'pointer' : 'not-allowed';
+  let allOk = true;
+  campos.forEach(({ id, val }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (!val) {
+      el.style.background = '#FFEBEE'; // vermelho claro
+      el.style.borderColor = '#E57373';
+      allOk = false;
+    } else {
+      el.style.background = '';
+      el.style.borderColor = '';
+    }
+  });
+
+  const btn = document.getElementById('cad-save-btn');
+  if (btn) {
+    btn.disabled = !allOk;
+    btn.style.opacity = allOk ? '1' : '0.5';
+    btn.style.cursor  = allOk ? 'pointer' : 'not-allowed';
+  }
 }
 
 // Adiciona listeners de validação em tempo real
@@ -775,7 +803,7 @@ async function saveCad() {
       body: JSON.stringify({ row, alteradoPor: 'Usuário' }),
     });
     const d = await r.json();
-    lbl.textContent = 'Salvar no Google Sheets';
+    lbl.textContent = 'Salvar Cadastro';
 
     if (d.success) {
       const acao = d.action === 'atualizado' ? 'Cadastro atualizado' : 'Cadastro inserido';
@@ -785,7 +813,7 @@ async function saveCad() {
       toast('Erro ao salvar: ' + (d.error || 'tente novamente'), 'err');
     }
   } catch(e) {
-    lbl.textContent = 'Salvar no Google Sheets';
+    lbl.textContent = 'Salvar Cadastro';
     toast('Erro ao conectar com o servidor', 'err');
     console.error(e);
   }
@@ -851,12 +879,54 @@ async function uploadDrive(){
 
 // ── CONSULTA ────────────────────────────────────────────────
 async function doConsulta(){
-  const nome=document.getElementById('c-nome').value,num=document.getElementById('c-num').value;
-  if(!nome&&!num){toast('Informe o nome para pesquisa','err');return;}
+  const nome = document.getElementById('c-nome').value;
+  const cpf  = document.getElementById('c-cpf').value;
+  const num  = document.getElementById('c-num').value;
+  const trib = document.getElementById('c-trib').value;
+
+  if(!nome && !num){ toast('Nome do associado não identificado','err'); return; }
+
   document.getElementById('c-loading').style.display='flex';
   document.getElementById('c-result').style.display='none';
-  const lbl=document.getElementById('c-btn-lbl'); lbl.innerHTML='<div class="spinner"></div>';
-  const prompt=`Você é um assistente jurídico especializado em processos da Justiça Federal. Analise: Nome: ${nome||'não informado'} | CPF: ${document.getElementById('c-cpf').value} | Processo nº: ${num||'não informado'} | Tribunal: TRF1 e CNJ/DataJud. Contexto: Associado da UNASLAF. Ações ativas: Adicional de Fronteira (1022299-41.2018.4.01.3400-TRF1), Jornada/Abono (1024043-71.2018.4.01.3400-TRF1), ADI 4151 STF (vitória 10x0/abril 2026), PASEP (improcedente/março 2026). Responda em 3 blocos: 1) Análise do perfil e relação com as ações da UNASLAF; 2) Como consultar pessoalmente em https://processual.trf1.jus.br e https://datajud-wiki.cnj.jus.br; 3) Próximos passos recomendados.`;
+  const lbl=document.getElementById('c-btn-lbl');
+  lbl.innerHTML='<div class="spinner"></div>';
+
+  // Mapa de tribunais para URL e nome completo
+  const tribMap = {
+    trf1: { nome:'TRF1 — 1ª Região', url:'https://processual.trf1.jus.br/consultaProcessual/processo.php' },
+    trf2: { nome:'TRF2 — 2ª Região', url:'https://portal.trf2.jus.br/portal/consulta/cons_proc.asp' },
+    trf3: { nome:'TRF3 — 3ª Região', url:'https://web.trf3.jus.br/base-textual' },
+    trf4: { nome:'TRF4 — 4ª Região', url:'https://www.trf4.jus.br/trf4/processos/acompanhamento/consulta_processual.php' },
+    trf5: { nome:'TRF5 — 5ª Região', url:'https://www.trf5.jus.br/Jurisprudencia/JurisServlet' },
+    trf6: { nome:'TRF6 — 6ª Região', url:'https://www.trf6.jus.br' },
+    stj:  { nome:'STJ — Superior Tribunal de Justiça', url:'https://processo.stj.jus.br/processo/pesquisa/' },
+    stf:  { nome:'STF — Supremo Tribunal Federal', url:'https://portal.stf.jus.br/processos/' },
+  };
+
+  const tribInfo = tribMap[trib] || tribMap['trf1'];
+
+  const prompt = `Você é um assistente jurídico especializado em processos da Justiça Federal brasileira.
+
+ASSOCIADO AUTENTICADO:
+- Nome: ${nome}
+- CPF: ${cpf}
+- Processo nº: ${num || 'não informado'}
+- Tribunal selecionado: ${tribInfo.nome}
+
+CONTEXTO UNASLAF — Ações coletivas:
+1. Adicional de Fronteira — 1022299-41.2018.4.01.3400 (TRF1) — mérito pendente
+2. Jornada/Abono de Ponto — MS 1024043-71.2018.4.01.3400 (TRF1)
+3. ADI 4151 — STF — VITÓRIA UNÂNIME 10x0 em abril/2026
+4. PASEP — 0727740-19.2020.8.07.0001 — improcedente (março/2026)
+
+Responda OBRIGATORIAMENTE começando com este aviso:
+"⚠️ Aviso: As informações fornecidas têm caráter orientativo e não oficial. Não substituem a consulta aos canais oficiais, a assessoria jurídica especializada ou as autoridades competentes."
+
+Depois responda em 3 blocos:
+1) Análise: como o perfil do associado se relaciona com as ações coletivas da UNASLAF e possíveis direitos
+2) Como consultar pessoalmente no ${tribInfo.nome} em: ${tribInfo.url}
+3) Próximos passos recomendados — incluindo orientação para buscar o jurídico da UNASLAF para análise individual`;
+
   try{
     const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       system:CTX,
@@ -866,11 +936,16 @@ async function doConsulta(){
       baseUrl: window.location.origin,
     })});
     const d=await r.json();
-    document.getElementById('c-loading').style.display='none'; lbl.textContent='Consultar via IA';
+    document.getElementById('c-loading').style.display='none';
+    lbl.textContent='Consultar via IA';
     document.getElementById('c-result').style.display='block';
     document.getElementById('c-result-body').innerHTML=(d.content?.[0]?.text||'Sem resultado.').replace(/\n/g,'<br>');
-    addHist('cons','Consulta: '+(nome||num));
-  }catch(e){ document.getElementById('c-loading').style.display='none'; lbl.textContent='Consultar via IA'; toast('Erro na consulta.','err'); }
+    addHist('cons','Consulta '+tribInfo.nome+': '+nome);
+  }catch(e){
+    document.getElementById('c-loading').style.display='none';
+    lbl.textContent='Consultar via IA';
+    toast('Erro na consulta. Tente novamente.','err');
+  }
 }
 
 // ── HISTÓRICO ────────────────────────────────────────────────
