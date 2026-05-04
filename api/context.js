@@ -49,7 +49,7 @@ async function listFiles(folderId, token) {
   ].map(m => `mimeType='${m}'`).join(' or ');
 
   const query = encodeURIComponent(`'${folderId}' in parents and (${mimeFilter}) and trashed=false`);
-  const url   = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType)&pageSize=20`;
+  const url   = `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,mimeType)&pageSize=30&orderBy=name`;
 
   const res  = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   const data = await res.json();
