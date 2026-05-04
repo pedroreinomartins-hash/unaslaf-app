@@ -83,7 +83,7 @@ async function readFile(file, token) {
       return null;
     }
 
-    return text.slice(0, 10000); // até 10k chars por arquivo
+    return text.slice(0, 15000); // até 15k chars por arquivo
   } catch (e) {
     console.warn(`Erro ao ler ${file.name}:`, e.message);
     return null;
