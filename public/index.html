@@ -315,6 +315,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           <span class="panel-header-title">Atendimento</span>
           <span class="panel-badge online">Online</span>
         </div>
+        <div style="background:#FFF8E1;border-bottom:1px solid #F9A825;padding:10px 16px;font-size:12px;color:#6D4C00;line-height:1.6;flex-shrink:0;">
+          ⚠️ <strong>Aviso importante:</strong> As informações geradas por inteligência artificial têm caráter <strong>orientativo e não oficial</strong>. Não substituem a consulta aos canais oficiais de informação processual, a assessoria jurídica especializada ou as autoridades competentes. Utilize este recurso apenas como ponto de partida para direcionar sua pesquisa.
+        </div>
         <div class="chat-body" id="chat-msgs"></div>
         <div class="chips" id="chips-area">
           <span class="chip" onclick="chip('O que é a Unaslaf?')">O que é a Unaslaf?</span>
@@ -506,10 +509,9 @@ AÇÕES COLETIVAS EM ANDAMENTO:
 3. ADI 4151 — STF. VITÓRIA UNÂNIME 10x0 em abril/2026! Transforma cargos de servidores ativos, aposentados e instituidores de pensão. Marco histórico para a categoria.
 4. PASEP — Processo 0727740-19.2020.8.07.0001 — Julgado improcedente (março/2026).
 
-AVISO OBRIGATÓRIO: Sempre que responder sobre processos judiciais, direitos, situação jurídica ou ações coletivas, inicie a resposta com este aviso em destaque:
-"⚠️ Aviso: As informações fornecidas têm caráter orientativo e não oficial. Não substituem a consulta aos canais oficiais de informação processual, a assessoria jurídica especializada ou as autoridades competentes. Utilize como ponto de partida para direcionar sua pesquisa nos canais oficiais."
+ORIENTAÇÕES: Responda sempre em português brasileiro, linguagem clara e acolhedora. Para atualização de dados, "Atualizar Cadastro". Para documentos, "Enviar Documentos". Se não souber algo, indique o site unaslaf.org.br.
 
-ORIENTAÇÕES: Responda sempre em português brasileiro, linguagem clara e acolhedora. Para dúvidas sobre processos individuais, oriente a usar a aba "Consulta Processual". Para atualização de dados, "Atualizar Cadastro". Para documentos, "Enviar Documentos". Se não souber algo, indique o site unaslaf.org.br.`;
+Quando o associado pedir fichas, formulários ou documentos para download, e forem fornecidos links no contexto, apresente-os como links clicáveis com o texto do nome do arquivo.`;
 
 // ── ESTADO ──────────────────────────────────────────────────
 let user = {cpf:'',cpfFmt:'',name:'',phone:'',data:[]};
@@ -707,6 +709,14 @@ function addBotMsg(text){
   el.innerHTML=`<div class="msg-av bot">U</div><div><div class="msg-bubble bot" style="white-space:pre-wrap;">${text}</div><div class="msg-time">${now()}</div></div>`;
   w.appendChild(el); w.scrollTop=w.scrollHeight;
 }
+function addBotMsgHtml(html){
+  const w=document.getElementById('chat-msgs'),el=document.createElement('div');
+  el.className='msg';
+  // Converte quebras de linha em <br> preservando HTML
+  const formatted = html.replace(/\n/g,'<br>');
+  el.innerHTML=`<div class="msg-av bot">U</div><div><div class="msg-bubble bot">${formatted}</div><div class="msg-time">${now()}</div></div>`;
+  w.appendChild(el); w.scrollTop=w.scrollHeight;
+}
 function addUserMsg(text){
   const w=document.getElementById('chat-msgs'),el=document.createElement('div');
   el.className='msg user';
@@ -721,18 +731,69 @@ function showTyping(){
 }
 function hideTyping(){ const e=document.getElementById('typing'); if(e)e.remove(); }
 
+// Palavras que indicam pedido de documento
+const DOCUMENTO_REGEX = /ficha|formulário|formulario|modelo|procuração|procuracao|filia|desfilia|requerimento|solicit|baixar|download|documento/i;
+
+// Cache do repositório no frontend
+let repoFiles = [];
+async function getRepoFiles() {
+  if (repoFiles.length) return repoFiles;
+  try {
+    const r = await fetch('/api/repositorio');
+    const d = await r.json();
+    repoFiles = d.files || [];
+  } catch(e) { repoFiles = []; }
+  return repoFiles;
+}
+
+function findRelevantFiles(files, pergunta) {
+  const q = pergunta.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return files.filter(f => {
+    const name = f.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const cat  = (f.categoria||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const palavras = q.split(/\s+/).filter(p => p.length > 3);
+    return palavras.some(p => name.includes(p) || cat.includes(p));
+  });
+}
+
 async function sendMsg(){
   const inp=document.getElementById('chat-in'),text=inp.value.trim();
   if(!text) return; inp.value='';
   addUserMsg(text);
   document.getElementById('chips-area').style.display='none';
   convHist.push({role:'user',content:text}); showTyping();
+
+  // Verifica se é pedido de documento/ficha
+  let docContext = '';
+  if (DOCUMENTO_REGEX.test(text)) {
+    const files = await getRepoFiles();
+    const relevantes = findRelevantFiles(files, text);
+    if (relevantes.length > 0) {
+      docContext = '\n\nDOCUMENTOS DISPONÍVEIS PARA DOWNLOAD (inclua estes links na resposta):\n' +
+        relevantes.map(f =>
+          `• ${f.icon} [${f.name}](https://unaslaf-app.vercel.app${f.downloadUrl}) — ${f.size}`
+        ).join('\n');
+    } else if (files.length > 0) {
+      docContext = '\n\nDOCUMENTOS DISPONÍVEIS NO REPOSITÓRIO:\n' +
+        files.map(f =>
+          `• ${f.icon} [${f.name}](https://unaslaf-app.vercel.app${f.downloadUrl})`
+        ).join('\n') +
+        '\n\nSe o documento solicitado estiver na lista acima, apresente o link para download.';
+    }
+  }
+
   try{
+    const msgContent = docContext ? text + docContext : text;
+    const messagesParaEnviar = [
+      ...convHist.slice(0,-1),
+      {role:'user', content: msgContent}
+    ];
+
     const r=await fetch('/api/chat',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         system:CTX,
-        messages:convHist,
+        messages:messagesParaEnviar,
         userName: user.name,
         userCpf: user.cpfFmt,
         baseUrl: window.location.origin,
@@ -740,7 +801,15 @@ async function sendMsg(){
     });
     const d=await r.json(); hideTyping();
     const reply=d.content?.[0]?.text||d.error||'Não foi possível obter resposta.';
-    addBotMsg(reply); convHist.push({role:'assistant',content:reply}); addHist('chat',text.slice(0,70));
+
+    // Converte markdown links [texto](url) em links HTML clicáveis
+    const replyHtml = reply
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g,
+        '<a href="$2" target="_blank" style="color:var(--blue);font-weight:500;text-decoration:underline;">$1</a>');
+
+    addBotMsgHtml(replyHtml);
+    convHist.push({role:'assistant',content:reply});
+    addHist('chat',text.slice(0,70));
   }catch(e){ hideTyping(); addBotMsg('Erro ao conectar com o servidor. Tente novamente.'); }
 }
 function chip(t){document.getElementById('chat-in').value=t;sendMsg();}
