@@ -1,35 +1,37 @@
 // =============================================================================
-// _security.js — Funções de segurança compartilhadas entre os endpoints
+// _security.js — Funções de segurança compartilhadas
 // =============================================================================
 // Contém:
-//   - Rate limiting: limita tentativas por IP para evitar abuso
-//   - JWT: gera e valida tokens de sessão após login
-//
-// CONFIGURAÇÕES AJUSTÁVEIS:
-//   RATE_LIMITS — define o máximo de chamadas por janela de tempo por endpoint
-//   JWT_EXPIRY  — tempo de validade da sessão após o login
+//   - Rate limiting por IP
+//   - HMAC de código: assina o código de verificação com chave secreta
+//     (resolve o problema de memória compartilhada entre instâncias serverless)
+//   - JWT: gera e valida tokens de sessão
 // =============================================================================
 
-// ── Configurações de Rate Limiting ─────────────────────────────────────────
-// Cada entrada define: { max: máximo de chamadas, window: janela em ms }
+import { createHmac } from 'crypto';
+
+// ── Configurações de Rate Limiting ──────────────────────────────────────────
 const RATE_LIMITS = {
-  sheet:     { max: 10,  window: 60_000  }, // login: 10 tentativas/minuto por IP
-  whatsapp:  { max: 5,   window: 60_000  }, // envio código: 5 tentativas/minuto
-  chat:      { max: 40,  window: 60_000  }, // chat: 40 mensagens/minuto por IP
-  cadastro:  { max: 10,  window: 60_000  }, // cadastro: 10 salvamentos/minuto
-  default:   { max: 60,  window: 60_000  }, // demais endpoints
+  auth:      { max: 10,  window: 60_000  }, // validação código: 10/min
+  sheet:     { max: 10,  window: 60_000  }, // login: 10/min
+  whatsapp:  { max: 5,   window: 60_000  }, // envio código: 5/min
+  chat:      { max: 40,  window: 60_000  }, // chat: 40/min
+  cadastro:  { max: 10,  window: 60_000  }, // cadastro: 10/min
+  default:   { max: 60,  window: 60_000  },
 };
 
-// ── Configurações de JWT ────────────────────────────────────────────────────
-const JWT_EXPIRY = 4 * 60 * 60 * 1000; // 4 horas em milissegundos
+// ── Configurações de JWT ─────────────────────────────────────────────────────
+const JWT_EXPIRY       = 4 * 60 * 60 * 1000; // 4 horas
+const HMAC_CODE_EXPIRY = 10 * 60;             // 10 minutos em segundos
 
-// ── Armazenamento em memória do rate limit ──────────────────────────────────
-// Nota: em ambiente serverless, este mapa é local à instância.
-// Para proteção distribuída seria necessário Redis (Upstash gratuito).
-// Para o volume da UNASLAF, esta solução é suficiente.
+// ── Segredo base ─────────────────────────────────────────────────────────────
+function getSecret() {
+  return process.env.OPENAI_API_KEY?.slice(-32) || 'unaslaf-secret-2026';
+}
+
+// ── Rate Limiting ─────────────────────────────────────────────────────────────
 const rateLimitStore = new Map();
 
-// ── Rate Limiting ───────────────────────────────────────────────────────────
 export function checkRateLimit(req, endpoint = 'default') {
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
            || req.headers['x-real-ip']
@@ -39,10 +41,8 @@ export function checkRateLimit(req, endpoint = 'default') {
   const key   = `${endpoint}:${ip}`;
   const limit = RATE_LIMITS[endpoint] || RATE_LIMITS.default;
   const now   = Date.now();
-
   const entry = rateLimitStore.get(key) || { count: 0, start: now };
 
-  // Resetar janela se expirou
   if (now - entry.start > limit.window) {
     entry.count = 0;
     entry.start = now;
@@ -53,38 +53,51 @@ export function checkRateLimit(req, endpoint = 'default') {
 
   if (entry.count > limit.max) {
     const resetIn = Math.ceil((limit.window - (now - entry.start)) / 1000);
-    return {
-      blocked: true,
-      message: `Muitas tentativas. Aguarde ${resetIn} segundos.`,
-      resetIn,
-    };
+    return { blocked: true, message: `Muitas tentativas. Aguarde ${resetIn} segundos.`, resetIn };
   }
-
   return { blocked: false };
 }
 
-// ── Limpeza periódica do store (evita vazamento de memória) ─────────────────
+// Limpeza periódica
 setInterval(() => {
   const now = Date.now();
   for (const [key, entry] of rateLimitStore.entries()) {
     const endpoint = key.split(':')[0];
     const limit    = RATE_LIMITS[endpoint] || RATE_LIMITS.default;
-    if (now - entry.start > limit.window * 2) {
-      rateLimitStore.delete(key);
-    }
+    if (now - entry.start > limit.window * 2) rateLimitStore.delete(key);
   }
-}, 5 * 60 * 1000); // limpa a cada 5 minutos
+}, 5 * 60 * 1000);
 
-// ── JWT simples (sem dependência externa) ───────────────────────────────────
-// Implementação leve usando HMAC-SHA256 nativo do Node.js
-import { createHmac } from 'crypto';
 
-function getSecret() {
-  // Usa a chave OpenAI como segredo base (já existe no Vercel)
-  // Em produção ideal seria uma variável JWT_SECRET dedicada
-  return process.env.OPENAI_API_KEY?.slice(-32) || 'unaslaf-secret-fallback-2026';
+// ── HMAC do Código de Verificação ────────────────────────────────────────────
+// Funciona assim:
+//   1. Servidor gera o código e assina: HMAC(cpf + código + janela_de_tempo)
+//   2. Frontend recebe o código + hmac e os armazena
+//   3. Na validação, o servidor recalcula o HMAC e compara
+//   Não precisa de memória compartilhada — a assinatura carrega a prova de autenticidade.
+
+export function gerarHmacCodigo(cpf, code) {
+  // Janela de tempo: muda a cada HMAC_CODE_EXPIRY segundos
+  const janela = Math.floor(Date.now() / 1000 / HMAC_CODE_EXPIRY);
+  const msg    = `${cpf}:${code}:${janela}`;
+  return createHmac('sha256', getSecret()).update(msg).digest('hex');
 }
 
+export function validarHmacCodigo(cpf, code, hmac) {
+  // Testa a janela atual e a anterior (tolerância de até 20 min)
+  const janelaAtual   = Math.floor(Date.now() / 1000 / HMAC_CODE_EXPIRY);
+  const janelaAnterior = janelaAtual - 1;
+
+  for (const janela of [janelaAtual, janelaAnterior]) {
+    const msg      = `${cpf}:${code}:${janela}`;
+    const expected = createHmac('sha256', getSecret()).update(msg).digest('hex');
+    if (expected === hmac) return true;
+  }
+  return false;
+}
+
+
+// ── JWT ──────────────────────────────────────────────────────────────────────
 function base64url(str) {
   return Buffer.from(str).toString('base64')
     .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
@@ -93,44 +106,35 @@ function base64url(str) {
 export function gerarToken(cpf, nome) {
   const header  = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
   const payload = base64url(JSON.stringify({
-    cpf,
-    nome,
+    cpf, nome,
     iat: Date.now(),
     exp: Date.now() + JWT_EXPIRY,
   }));
-  const signature = base64url(
-    createHmac('sha256', getSecret())
-      .update(`${header}.${payload}`)
-      .digest('binary')
+  const sig = base64url(
+    createHmac('sha256', getSecret()).update(`${header}.${payload}`).digest('binary')
   );
-  return `${header}.${payload}.${signature}`;
+  return `${header}.${payload}.${sig}`;
 }
 
 export function validarToken(token) {
   if (!token) return null;
   try {
-    const [header, payload, signature] = token.split('.');
-    if (!header || !payload || !signature) return null;
+    const [header, payload, sig] = token.split('.');
+    if (!header || !payload || !sig) return null;
 
-    // Verifica assinatura
     const expectedSig = base64url(
-      createHmac('sha256', getSecret())
-        .update(`${header}.${payload}`)
-        .digest('binary')
+      createHmac('sha256', getSecret()).update(`${header}.${payload}`).digest('binary')
     );
-    if (signature !== expectedSig) return null;
+    if (sig !== expectedSig) return null;
 
-    // Verifica expiração
     const data = JSON.parse(Buffer.from(payload, 'base64').toString());
     if (Date.now() > data.exp) return null;
-
-    return data; // retorna { cpf, nome, iat, exp }
+    return data;
   } catch {
     return null;
   }
 }
 
-// ── Helper: extrai token do header Authorization ────────────────────────────
 export function extrairToken(req) {
   const auth = req.headers['authorization'] || '';
   if (auth.startsWith('Bearer ')) return auth.slice(7);
