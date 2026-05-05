@@ -22,6 +22,7 @@
 // =============================================================================
 
 import { DOCS } from './context-static.js';
+import { checkRateLimit, validarToken, extrairToken } from './_security.js';
 
 
 // =============================================================================
@@ -336,6 +337,15 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Rate limit: máximo 40 mensagens por minuto por IP
+  const rl = checkRateLimit(req, 'chat');
+  if (rl.blocked) return res.status(429).json({ error: rl.message });
+
+  // Validação de sessão — exige token JWT válido
+  const sessionToken = extrairToken(req);
+  const session      = validarToken(sessionToken);
+  if (!session) return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
 
   const { messages, system, userName, userCpf, baseUrl } = req.body;
   const lastMsg = messages?.[messages.length - 1]?.content || '';
