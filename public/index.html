@@ -618,7 +618,7 @@ async function doLookup(){
 
   user.name=foundName;
   user.phone=foundPhone?(foundPhone.startsWith('55')?foundPhone:'55'+foundPhone):'';
-  user.email=(c[4]||'').trim(); // e-mail coluna E da nova planilha
+  user.email=(user.data[4]||'').trim(); // e-mail coluna E da nova planilha
 
   // Popula tela de escolha de canal com dados mascarados
   const btnWpp   = document.getElementById('btn-canal-wpp');
