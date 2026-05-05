@@ -1,8 +1,20 @@
-// ── Colunas da planilha principal (Associados) ──────────────
-// A: Matricula SIAPE | B: Nome | C: CPF (chave) | D: Cargo
-// E: Situação Funcional | F: Telefone | G: E-mail
-// H: Endereço | I: Cidade | J: UF
-// K: Data Última Alteração | L: Alterado por
+// ── Colunas da planilha ROLDEASSOCIADOS_APP_CONSOLIDADO (Sheet1) ──
+// A: Origem      (0)
+// B: SIAPE       (1)
+// C: Nome        (2)
+// D: CPF         (3) ← chave de busca
+// E: Email       (4)
+// F: Telefone    (5)
+// G: Observações (6)
+// H: Cargo       (7)
+// I: Servidor/Pensionista (8)
+// J: Situação funcional   (9)
+// K: Órgão       (10)
+// L: Endereço    (11)
+// M: Cidade      (12)
+// N: UF          (13)
+// O: Data Atualização (14)
+// P: Alterado por     (15) ← adicionada pelo sistema
 
 async function getAccessToken(credentials) {
   const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
@@ -48,7 +60,7 @@ async function getSheetValues(sheetId, sheetName, token) {
 }
 
 async function updateRow(sheetId, sheetName, rowIndex, values, token) {
-  const range = `${sheetName}!A${rowIndex}:L${rowIndex}`;
+  const range = `${sheetName}!A${rowIndex}:P${rowIndex}`;
   const url   = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
   const res   = await fetch(url, {
     method: 'PUT',
@@ -59,7 +71,7 @@ async function updateRow(sheetId, sheetName, rowIndex, values, token) {
 }
 
 async function appendRow(sheetId, sheetName, values, token) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(sheetName)}!A:L:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${encodeURIComponent(sheetName)}!A:P:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
   const res = await fetch(url, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -82,9 +94,9 @@ async function ensureHistoricoSheet(sheetId, token) {
       body: JSON.stringify({ requests: [{ addSheet: { properties: { title: 'Histórico' } } }] }),
     });
     await appendRow(sheetId, 'Histórico', [
-      'Matricula SIAPE','Nome','CPF','Cargo','Situação Funcional',
-      'Telefone','E-mail','Endereço','Cidade','UF',
-      'Data Alteração','Alterado por'
+      'Origem','SIAPE','Nome','CPF','Email','Telefone','Observações',
+      'Cargo','Servidor/Pensionista','Situação funcional','Órgão',
+      'Endereço','Cidade','UF','Data Atualização','Alterado por'
     ], token);
   }
 }
@@ -101,23 +113,24 @@ export default async function handler(req, res) {
     const sheetId     = process.env.SHEETS_ID;
     const token       = await getAccessToken(credentials);
 
-    // row: [siape, nome, cpf, cargo, situacao, tel, email, end, cidade, uf]
+    // Nova estrutura: row enviado pelo frontend
+    // [origem, siape, nome, cpf, email, tel, obs, cargo, servPens, situacao, orgao, end, cidade, uf]
     const { row, alteradoPor = 'Usuário' } = req.body;
 
-    if (!row || !Array.isArray(row) || !row[2]) {
+    if (!row || !Array.isArray(row) || !row[3]) {
       return res.status(400).json({ error: 'CPF obrigatório' });
     }
 
-    const cpfNovo   = row[2].replace(/\D/g, '');
-    const dataAgora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const cpfNovo   = row[3].replace(/\D/g, '');
+    const dataAgora = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 
-    // 1. Busca linha existente pelo CPF
-    const values      = await getSheetValues(sheetId, 'Associados', token);
+    // 1. Busca linha existente pelo CPF (coluna D = índice 3)
+    const values      = await getSheetValues(sheetId, 'Sheet1', token);
     let foundRowIndex = -1;
     let existingRow   = [];
 
     for (let i = 1; i < values.length; i++) {
-      const cpfExistente = (values[i][2] || '').replace(/\D/g, '');
+      const cpfExistente = (values[i][3] || '').replace(/\D/g, '');
       if (cpfExistente === cpfNovo) {
         foundRowIndex = i + 1; // Sheets é base 1
         existingRow   = values[i];
@@ -132,16 +145,16 @@ export default async function handler(req, res) {
         ? String(newVal).trim()
         : existing;
     });
-    while (merged.length < 10) merged.push('');
+    while (merged.length < 14) merged.push('');
 
     const finalRow = [...merged, dataAgora, alteradoPor];
 
     // 3. Atualiza linha existente ou insere nova
     if (foundRowIndex > 0) {
-      await updateRow(sheetId, 'Associados', foundRowIndex, finalRow, token);
+      await updateRow(sheetId, 'Sheet1', foundRowIndex, finalRow, token);
       console.log(`Atualizado: CPF ${cpfNovo} linha ${foundRowIndex} por ${alteradoPor}`);
     } else {
-      await appendRow(sheetId, 'Associados', finalRow, token);
+      await appendRow(sheetId, 'Sheet1', finalRow, token);
       console.log(`Inserido: CPF ${cpfNovo} por ${alteradoPor}`);
     }
 
