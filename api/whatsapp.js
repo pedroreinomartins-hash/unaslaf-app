@@ -1,5 +1,4 @@
-import { checkRateLimit } from './_security.js';
-import { registrarCodigo } from './auth.js';
+import { checkRateLimit, gerarHmacCodigo } from './_security.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -8,20 +7,19 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Rate limit: máximo 5 envios por minuto por IP
   const rl = checkRateLimit(req, 'whatsapp');
   if (rl.blocked) return res.status(429).json({ error: rl.message });
 
-  const { phone, message, cpf, code, nome } = req.body;
+  const { phone, message, cpf, code } = req.body;
   const instance = process.env.ZAPI_INSTANCE;
   const token    = process.env.ZAPI_TOKEN;
   const client   = process.env.ZAPI_CLIENT_TOKEN || '';
 
-  // Registra o código no backend ANTES de enviar pelo WhatsApp
-  // Assim o /api/auth consegue validar quando o usuário digitar
+  // Gera HMAC do código — será devolvido ao frontend e usado na validação
+  // Não precisa de memória compartilhada entre instâncias serverless
+  let hmac = '';
   if (cpf && code) {
-    registrarCodigo(cpf.replace(/\D/g, ''), String(code), nome || '');
-    console.log(`Código registrado para CPF ${cpf.replace(/\D/g,'').slice(0,3)}***`);
+    hmac = gerarHmacCodigo(cpf.replace(/\D/g, ''), String(code));
   }
 
   try {
@@ -33,7 +31,8 @@ export default async function handler(req, res) {
       { method: 'POST', headers, body: JSON.stringify({ phone, message }) }
     );
     const data = await response.json();
-    return res.status(response.status).json(data);
+    // Retorna o hmac junto com a resposta da Z-API
+    return res.status(response.status).json({ ...data, hmac });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
