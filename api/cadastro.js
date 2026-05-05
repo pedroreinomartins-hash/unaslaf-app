@@ -4,7 +4,7 @@
 // C: Nome        (2)
 // D: CPF         (3) ← chave de busca
 
-import { checkRateLimit, validarToken, extrairToken } from './_security.js';
+import { checkRateLimit, validarToken, extrairToken } from '../lib/_security.js';
 // E: Email       (4)
 // F: Telefone    (5)
 // G: Observações (6)

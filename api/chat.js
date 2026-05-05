@@ -21,8 +21,8 @@
 //
 // =============================================================================
 
-import { DOCS } from './context-static.js';
-import { checkRateLimit, validarToken, extrairToken } from './_security.js';
+import { DOCS } from '../lib/context-static.js';
+import { checkRateLimit, validarToken, extrairToken } from '../lib/_security.js';
 
 
 // =============================================================================
