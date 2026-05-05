@@ -49,8 +49,8 @@ export default async function handler(req, res) {
     const sheetId     = process.env.SHEETS_ID;
     const token       = await getAccessToken(credentials);
 
-    // Lê a aba Associados diretamente via API — sempre dados em tempo real
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Associados?majorDimension=ROWS`;
+    // Lê a aba Sheet1 da nova planilha ROLDEASSOCIADOS_APP_CONSOLIDADO
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1?majorDimension=ROWS`;
     const sheetsRes = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
