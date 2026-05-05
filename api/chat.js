@@ -113,7 +113,7 @@ async function searchAndAnswer(msgs) {
   const res = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
-    body: JSON.stringify({ model: 'gpt-4o-mini', tools: [{ type: 'web_search_preview' }], tool_choice: 'auto', input: msgs }),
+    body: JSON.stringify({ model: 'gpt-4.1-mini', tools: [{ type: 'web_search_preview' }], tool_choice: 'auto', input: msgs }),
   });
   if (!res.ok) return null;
   const data = await res.json();
@@ -124,7 +124,7 @@ async function standardAnswer(msgs) {
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
-    body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 2000, messages: msgs }),
+    body: JSON.stringify({ model: 'gpt-4.1-mini', max_tokens: 2000, messages: msgs }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error?.message || 'OpenAI error');
@@ -157,7 +157,7 @@ BASE DE CONHECIMENTO UNASLAF:
 ${context}
 ========================================
 
-Responda em português brasileiro, linguagem clara e cordial. NUNCA INVENTE INFORMAÇÕES, Use APENAS as informações acima. Se não tiver os detalhes solicitados, informe que pode pesquisar mais sobre o tema se o associado detalhar a dúvida.`;
+Responda em português brasileiro, linguagem clara e cordial. Use APENAS as informações acima. Se não tiver os detalhes solicitados, informe que pode pesquisar mais sobre o tema se o associado detalhar a dúvida.`;
 
   const openaiMessages = [{ role: 'system', content: systemFull }, ...messages];
 
