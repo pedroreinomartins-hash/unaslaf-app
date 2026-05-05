@@ -623,4 +623,55 @@ PARTE 2 (registros 371 a 487):
 431;YARA TRABALLI BOZZI;solteira;338.442.597-91
 432;ZELITA GONÇALVES DE OLIVEIRA PINELLI;casada;768.000.598-20` });
 
+DOCS.push({ id:'processos_completo', title:'Tabela Completa de Processos UNASLAF', category:'processos_acoes', content:`TABELA COMPLETA DE PROCESSOS – UNASLAF
+Atualizado: Maio/2026
+
+ESCRITÓRIO | PROCESSO | FORO | DATA DISTRIB. | SITUAÇÃO | ASSUNTO | BENEFICIÁRIOS
+
+=== ESCRITÓRIO: EQUIPE INTERNA ===
+ADI 4151 | STF | - | - | Em andamento | ADI 4151 | Todos os associados
+
+=== ESCRITÓRIO: MOTA ADVOGADOS ===
+0727740-19.2020.8.07.0001 | TJDF - 24ª Vara Cível | 31/08/2020 | - | PASEP | Lista específica
+1004692-44.2020.4.01.3400 | JFDF - 6ª Vara Cível | 29/01/2020 | - | Auxílio Transporte Coletiva | Rol de associados
+1015579-87.2020.4.01.3400 | JFDF - 4ª Vara Cível | 19/03/2020 | Arquivado Definitivamente | Mandado de Segurança/COVID-19/Serviço Público | Rol de associados
+1019847-53.2021.4.01.3400 | JFDF - 6ª Vara Cível | 08/04/2021 | - | Abono de Permanência | Rol de associados
+1023229-54.2021.4.01.3400 | JFDF - 2ª Vara Cível | 26/04/2021 | - | Paridade | Rol de associados
+1074276-67.2021.4.01.3400 | JFDF - 8ª Vara Cível | 19/10/2021 | - | Conversão da licença prêmio não gozada em pecúnia | Rol de associados
+1079393-39.2021.4.01.3400 | JFDF - 5ª Vara Cível | 09/11/2021 | Arquivado (aguardando execução) | Inexigibilidade do IR sobre auxílio-creche e assistência pré-escolar | Rol de associados
+1080942-84.2021.4.01.3400 | JFDF - 3ª Vara Cível | 16/11/2021 | Com Agravo de Instrumento 1036859-27.2023.4.01.0000 | Inexigibilidade de quota de participação sobre o auxílio creche | Rol de associados
+1084980-42.2021.4.01.3400 | JFDF - 17ª Vara Cível | 01/12/2021 | - | Inconstitucionalidade e inexigibilidade de exação (dobra do teto do RGPS) | Rol de associados
+5024330-86.2020.4.03.6100 | JFSP - 17ª Vara Cível | - | - | Reposição ao erário | Lista específica
+0061254-90.1997.4.03.6100 | JFSP - 4ª Vara Cível | - | - | Reajuste dos 28,86% concedido aos militares pela Lei 8.627/93 | Lista específica
+970025637-5 | JFRS - 6ª Vara | - | Arquivado | 28,86% | Lista específica
+0031048-60.2001.4.01.3400 | JFDF - 15ª Vara Cível | - | Arquivado | 28,86% | Lista específica
+38782-33.1999.4.01.34.00 | JFSP - 4ª Vara Cível | - | Arquivado | 28,86% | Lista específica
+8426-69.2010.4.01.3400 | JFDF | - | - | Averbação/Cômputo/Conversão de tempo de serviço especial | -
+1022299-41.2018.4.01.3400 | JFDF - 22ª Vara Cível | - | - | Adicional de Fronteira | -
+1024043-71.2018.4.01.3400 | JFDF - 2ª Vara Cível | - | - | IN nº 02/2018 – Jornada de Trabalho/Abono de Ponto | -
+0727196-31.2020.8.07.0001 | JFDF - 21ª Vara Cível | - | - | Danos Materiais GEAP | Rol de associados
+1007732-68.2019.4.01.3400 | JFDF - 6ª Vara Cível | - | - | Suspensão dos Efeitos da MP 873/2019 | Diretores UNASLAF
+1009517-65.2019.4.01.3400 | JFDF - 22ª Vara Cível | - | - | Auxílio Transporte (grupo específico de servidores) | -
+2005.71.00.020255-3 | JFRS | - | - | Execução de sentença - Ação Principal nº 97.00.023625-0/RS | Lucia Trindade de Souza, Nair Rost de Borba, Ines Irene Brugnera Castelli (excluída – litispendência)
+5002118-66.2011.4.04.7100 | JFRS | - | - | Execução de sentença - Ação Principal nº 97.00.023625-0/RS | Amadeu Fabre Neto (excluído), Célia Arndt Gomes, Celso Scheffer Salles, Domingos Adão Davila, José Luis Dellagnere Fenoy, Leni Amir Perone (excluída), Maria Alice Nicolini, Maria Dora Ferreira Medeiros, Maria Isabel Radaelli Duarte, Maria Thereza Correa da Silva, Nair Rost de Borba
+5002121-21.2011.4.04.7100 | JFRS | - | Arquivado | Embargos de execução | -
+5005264-18.2011.4.04.7100 | JFRS | - | Arquivado | Embargos de execução | -
+5053568-38.2017.4.04.7100 | JFRS | - | - | Execução de sentença - Ação Principal nº 97.00.023625-0/RS | Doris Silva Veiga, Eni Terezinha Barbosa de Araújo, Iara Beatriz dos Santos Correa, Ivani Baptista dos Santos, Maria de Fátima Gatto Tosin, Osmar Nunes de Freitas (excluído), Rosaura Maria Silveira Vieira, Rute Pacheco Borges
+
+=== ESCRITÓRIO: RAPHAEL MALINVERNI ===
+0055884-14.2012.4.01.3400 | JFDF - 1ª Vara Cível | 13/11/2012 | - | Ação Ordinária - transformação cargo de Analista Tributário | Lista específica
+0005911-80.2018.4.01.3400 | JFDF - 7ª Vara Cível | - | - | Execução provisória 1 - Nomenclatura | Lista específica
+0012872-86.2008.4.01.3400 | JFDF - 7ª Vara Cível | 22/04/2008 | - | Correção Nomenclatura | Lista específica
+0020259-84.2010.4.01.3400 | JFDF - 22ª Vara Cível | 27/04/2010 | - | Contra descontos de INSS sobre terço de férias | -
+0038104-37.2007.4.01.3400 | JFDF - 16ª Vara Cível | 29/10/2007 | Arquivado | Suspensão prazo retorno INSS | -
+1018458-28.2024.4.01.3400 | JFDF - 7ª Vara Cível | 21/03/2024 | - | Execução provisória 2 - Nomenclatura | Lista específica
+0036028-35.2010.4.01.3400 | JFDF - 9ª Vara Cível | - | - | Exclusão do PECFAZ | -
+1098257-23.2024.4.01.3400 | JFDF - 7ª Vara Cível | 03/12/2024 | - | Segunda Correção Nomenclatura | Lista específica
+0031897-85.2008.4.01.3400 | - | - | - | Suspensão artigo 256-A PECFAZ | -
+1014667-95.2026.4.01.0000 | TRF1 | 20/04/2026 | - | Agravo de Instrumento - MS 1021420-53.2026.4.01.3400 - Portaria DGP/SSC/MGI nº 1.985 de 27/02/2026 | Lista específica: ALDO ROEDEL 309.039.719-68; EDUARDO ROBERTO TORRIERI 206.956.248-49; GLAUCIA DA SILVA CORLAITE 046.427.396-02; JOÃO ALVES DO SANTOS 721.929.338-00; JULIA MARIA THEREZA MURBACK 067.768.948-92; MARIANA THEREZA MURBACK 431.217.398-24; MARCIA MACHADO DE FREITAS 382.441.876-20; MARIA CRISTINA DE CARVALHO 004.823.298-07; MARILDA ANTONIA DE FREITAS PERUSSO 056.460.788-65; MILCIO DE FREITAS BAHIA 296.272.147-87; NEUSA BEATRIZ NOGUEIRA 480.454.460-72; REGINA PEREIRA DE FREITAS KLEIN 607.779.829-00; SUELI MOREIRA PINTO 066.123.708-74
+1021420-53.2026.4.01.3400 | JFDF - 18ª Vara Federal Cível | 04/03/2026 | - | Mandado de Segurança - Portaria DGP/SSC/MGI nº 1.985 de 27/02/2026 | Lista específica: ALDO ROEDEL 309.039.719-68; EDUARDO ROBERTO TORRIERI 206.956.248-49; GLAUCIA DA SILVA CORLAITE 046.427.396-02; JOÃO ALVES DO SANTOS 721.929.338-00; JULIA MARIA THEREZA MURBACK 067.768.948-92; MARIANA THEREZA MURBACK 431.217.398-24; MARCIA MACHADO DE FREITAS 382.441.876-20; MARIA CRISTINA DE CARVALHO 004.823.298-07; MARILDA ANTONIA DE FREITAS PERUSSO 056.460.788-65; MILCIO DE FREITAS BAHIA 296.272.147-87; NEUSA BEATRIZ NOGUEIRA 480.454.460-72; REGINA PEREIRA DE FREITAS KLEIN 607.779.829-00; SUELI MOREIRA PINTO 066.123.708-74
+
+TOTAL DE PROCESSOS: 38 processos/ações identificados
+ESCRITÓRIOS: Equipe Interna, Mota Advogados, Raphael Malinverni` });
+
 console.log('context-static.js carregado com', DOCS.length, 'documentos');
