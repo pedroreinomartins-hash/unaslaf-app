@@ -1,4 +1,5 @@
 import { checkRateLimit } from './_security.js';
+import { registrarCodigo } from './auth.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -11,10 +12,17 @@ export default async function handler(req, res) {
   const rl = checkRateLimit(req, 'whatsapp');
   if (rl.blocked) return res.status(429).json({ error: rl.message });
 
-  const { phone, message } = req.body;
+  const { phone, message, cpf, code, nome } = req.body;
   const instance = process.env.ZAPI_INSTANCE;
   const token    = process.env.ZAPI_TOKEN;
   const client   = process.env.ZAPI_CLIENT_TOKEN || '';
+
+  // Registra o código no backend ANTES de enviar pelo WhatsApp
+  // Assim o /api/auth consegue validar quando o usuário digitar
+  if (cpf && code) {
+    registrarCodigo(cpf.replace(/\D/g, ''), String(code), nome || '');
+    console.log(`Código registrado para CPF ${cpf.replace(/\D/g,'').slice(0,3)}***`);
+  }
 
   try {
     const headers = { 'Content-Type': 'application/json' };
