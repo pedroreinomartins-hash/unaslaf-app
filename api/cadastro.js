@@ -2,14 +2,14 @@
 // A[0]:  SIAPE
 // B[1]:  Nome
 // C[2]:  CPF  ← chave de busca
-// K[10]: Email 1
-// N[13]: Telefone 1
-// Q[16]: Logradouro/Endereço
-// U[20]: Cidade
-// W[22]: UF
-// X[23]: Situação Funcional
-// AI[34]: Órgão
-// AT[45]: Categoria Funcional
+// K[10]: Email Principal
+// M[12]: Telefone 1
+// P[15]: Logradouro
+// T[19]: Cidade
+// V[21]: UF
+// W[22]: Situação Funcional
+// AH[33]: Órgão
+// AS[44]: Categoria Funcional
 
 import { checkRateLimit, validarToken, extrairToken } from '../lib/_security.js';
 
@@ -154,11 +154,11 @@ export default async function handler(req, res) {
     while (updatedRow.length < 66) updatedRow.push('');
 
     // Aplica campos editáveis pelo associado
-    if (row[3]) updatedRow[10] = row[3]; // Email 1  [10]
-    if (row[4]) updatedRow[13] = row[4]; // Telefone 1 [13]
-    if (row[5]) updatedRow[16] = row[5]; // Endereço [16]
-    if (row[6]) updatedRow[20] = row[6]; // Cidade [20]
-    if (row[7]) updatedRow[22] = row[7]; // UF [22]
+    if (row[3]) updatedRow[10] = row[3]; // Email Principal [10]
+    if (row[4]) updatedRow[12] = row[4]; // Telefone 1      [12]
+    if (row[5]) updatedRow[15] = row[5]; // Logradouro      [15]
+    if (row[6]) updatedRow[19] = row[6]; // Cidade          [19]
+    if (row[7]) updatedRow[21] = row[7]; // UF              [21]
 
     // Registra data e responsável nas últimas colunas
     updatedRow[65] = `Atualizado em ${dataAgora} por ${alteradoPor}`;
@@ -173,7 +173,7 @@ export default async function handler(req, res) {
       dataAgora, alteradoPor, cpfNovo,
       updatedRow[1], // Nome
       updatedRow[10], // Email
-      updatedRow[13], // Telefone
+      updatedRow[12], // Telefone
     ];
     await appendRow(sheetId, 'Histórico', histRow, token);
 
