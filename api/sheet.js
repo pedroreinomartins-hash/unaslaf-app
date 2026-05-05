@@ -1,6 +1,8 @@
 // Lê a planilha diretamente via Google Sheets API (sem cache)
 // Substitui a URL CSV pública que tem cache de até 5 minutos no Google
 
+import { checkRateLimit } from './_security.js';
+
 async function getAccessToken(credentials) {
   const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
   const now    = Math.floor(Date.now() / 1000);
@@ -43,6 +45,10 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // Rate limit: máximo 10 consultas por minuto por IP
+  const rl = checkRateLimit(req, 'sheet');
+  if (rl.blocked) return res.status(429).json({ error: rl.message });
 
   try {
     const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
