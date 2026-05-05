@@ -1,5 +1,27 @@
 import { DOCS } from './context-static.js';
 
+// ── Cache do Drive (10 minutos) ──────────────────────────────
+let driveCache = { text: '', ts: 0 };
+const DRIVE_CACHE_TTL = 10 * 60 * 1000;
+
+async function getDriveContext(baseUrl) {
+  const now = Date.now();
+  if (driveCache.text && (now - driveCache.ts) < DRIVE_CACHE_TTL) {
+    return driveCache.text;
+  }
+  try {
+    const res = await fetch(`${baseUrl}/api/context`);
+    if (!res.ok) return '';
+    const data = await res.json();
+    driveCache = { text: data.context || '', ts: now };
+    console.log(`Drive context: ${data.filesRead} arquivos, ${driveCache.text.length} chars`);
+    return driveCache.text;
+  } catch (e) {
+    console.warn('Drive context erro:', e.message);
+    return '';
+  }
+}
+
 // ── Índice resumido — enviado em TODAS as perguntas (~500 tokens) ──
 // Gerado uma vez a partir dos documentos estáticos
 let _indice = null;
@@ -26,6 +48,7 @@ const REGEX = {
   estatuto:      /estatuto|filiação|desfiliação|associado|mensalidade|sanção|penalidade|conselho/i,
   regimento:     /regimento|eleição|delegado|chapa|votação|impugnação|assembleia/i,
   lista28:       /28%|lista.*associado|ação.*28|ação dos 28/i,
+  processos:     /tabela.*processo|todos.*processos|lista.*processo|processos.*unaslaf|escritório.*mota|malinverni|pecfaz|nomenclatura|28,86|reajuste.*28|execução.*sentença.*rs/i,
   buscaWeb:      /notícia|noticia|recente|último|ultima|hoje|esta semana|novidade/i,
 };
 
@@ -62,6 +85,11 @@ function selectContext(msg) {
   // Lista 28%
   if (REGEX.lista28.test(m)) {
     return getDoc('lista_28_pt1') + '\n\n' + getDoc('lista_28_pt2');
+  }
+
+  // Tabela completa de processos
+  if (REGEX.processos.test(m)) {
+    return getDoc('processos_completo');
   }
 
   // Ação específica — detecta por palavras-chave
@@ -139,11 +167,19 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { messages, system, userName, userCpf } = req.body;
+  const { messages, system, userName, userCpf, baseUrl } = req.body;
   const lastMsg = messages?.[messages.length - 1]?.content || '';
 
-  // Seleciona apenas o contexto relevante para a pergunta
-  const context = selectContext(lastMsg);
+  // Camada 1 — Contexto estático (instantâneo)
+  const staticContext = selectContext(lastMsg);
+
+  // Camada 2 — Contexto do Drive (dinâmico, sem necessidade de redeploy)
+  const driveContext = baseUrl ? await getDriveContext(baseUrl) : '';
+
+  // Combina: estático tem prioridade, Drive complementa com atualizações
+  const context = driveContext
+    ? `${staticContext}\n\n========================================\nATUALIZAÇÕES RECENTES (documentos do Drive):\n========================================\n${driveContext.slice(0, 8000)}`
+    : staticContext;
 
   const systemFull = `${system || ''}
 
