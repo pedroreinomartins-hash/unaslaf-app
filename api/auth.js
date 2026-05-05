@@ -1,32 +1,12 @@
 // =============================================================================
-// auth.js — Endpoint de autenticação: valida o código e gera token de sessão
+// auth.js — Gera token JWT após validação local do código no frontend
 // =============================================================================
-// Chamado pelo frontend após o associado digitar o código de 6 dígitos.
-// Se o código estiver correto, retorna um JWT que será usado nas demais chamadas.
+// O código de 6 dígitos é validado no frontend (como era antes).
+// Este endpoint recebe o CPF + código + hash de validação e emite o JWT.
+// Não depende de memória compartilhada entre instâncias serverless.
 // =============================================================================
 
-import { checkRateLimit, gerarToken } from './_security.js';
-
-// Armazena códigos pendentes: { cpf: { code, nome, cpf, exp } }
-const codigosPendentes = new Map();
-
-// ── Registrar código enviado (chamado internamente após envio do WhatsApp) ──
-export function registrarCodigo(cpf, code, nome) {
-  codigosPendentes.set(cpf, {
-    code,
-    nome,
-    cpf,
-    exp: Date.now() + 10 * 60 * 1000, // 10 minutos
-  });
-}
-
-// ── Limpeza periódica de códigos expirados ──────────────────────────────────
-setInterval(() => {
-  const now = Date.now();
-  for (const [cpf, entry] of codigosPendentes.entries()) {
-    if (now > entry.exp) codigosPendentes.delete(cpf);
-  }
-}, 60_000);
+import { checkRateLimit, gerarToken, validarHmacCodigo } from './_security.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -36,32 +16,24 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   // Rate limit: 10 tentativas por minuto por IP
-  const rl = checkRateLimit(req, 'sheet');
+  const rl = checkRateLimit(req, 'auth');
   if (rl.blocked) return res.status(429).json({ error: rl.message });
 
-  const { cpf, code } = req.body;
-  if (!cpf || !code) return res.status(400).json({ error: 'CPF e código obrigatórios' });
+  const { cpf, code, hmac, nome } = req.body;
+  if (!cpf || !code || !hmac) {
+    return res.status(400).json({ error: 'Dados incompletos.' });
+  }
 
   const cpfClean = cpf.replace(/\D/g, '');
-  const entry    = codigosPendentes.get(cpfClean);
 
-  if (!entry) {
-    return res.status(401).json({ error: 'Código expirado ou CPF não encontrado. Tente novamente.' });
+  // Valida o HMAC: garante que o código foi gerado pelo nosso servidor
+  const valido = validarHmacCodigo(cpfClean, code, hmac);
+  if (!valido) {
+    return res.status(401).json({ error: 'Código inválido ou expirado.' });
   }
 
-  if (Date.now() > entry.exp) {
-    codigosPendentes.delete(cpfClean);
-    return res.status(401).json({ error: 'Código expirado. Solicite um novo.' });
-  }
-
-  if (entry.code !== String(code).trim()) {
-    return res.status(401).json({ error: 'Código incorreto.' });
-  }
-
-  // Código correto — gera token de sessão
-  codigosPendentes.delete(cpfClean);
-  const token = gerarToken(cpfClean, entry.nome);
-
+  // Emite token JWT de sessão
+  const token = gerarToken(cpfClean, nome || '');
   console.log(`Auth OK: CPF ${cpfClean.slice(0, 3)}***`);
-  return res.status(200).json({ token, nome: entry.nome });
+  return res.status(200).json({ token, nome });
 }
