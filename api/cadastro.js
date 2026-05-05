@@ -3,6 +3,8 @@
 // B: SIAPE       (1)
 // C: Nome        (2)
 // D: CPF         (3) ← chave de busca
+
+import { checkRateLimit, validarToken, extrairToken } from './_security.js';
 // E: Email       (4)
 // F: Telefone    (5)
 // G: Observações (6)
@@ -107,6 +109,15 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Rate limit: máximo 10 salvamentos por minuto por IP
+  const rl = checkRateLimit(req, 'cadastro');
+  if (rl.blocked) return res.status(429).json({ error: rl.message });
+
+  // Validação de sessão — exige token JWT válido
+  const sessionToken = extrairToken(req);
+  const session      = validarToken(sessionToken);
+  if (!session) return res.status(401).json({ error: 'Sessão expirada. Faça login novamente.' });
 
   try {
     const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT);
