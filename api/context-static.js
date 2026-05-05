@@ -1,15 +1,31 @@
-// context-static.js — gerado a partir do context-data-validado.js
-// 25 documentos com conteúdo integral embutido
-// Zero chamadas ao Drive — carregado em memória no boot do serverless
+// =============================================================================
+// context-static.js — Base de Conhecimento da UNASLAF
+// =============================================================================
+// COMO USAR ESTE ARQUIVO:
+// Cada bloco DOCS.push({...}) é um "documento" temático que a IA usa para
+// responder perguntas. Para editar um conteúdo, localize o bloco pelo
+// comentário de seção e edite apenas o campo `content` entre as crases (` `).
+//
+// ESTRUTURA DE CADA DOCUMENTO:
+//   id:       identificador único (não alterar)
+//   title:    título descritivo
+//   category: categoria temática
+//   content:  o conteúdo em si — é aqui que você edita
+//
+// PARA ADICIONAR UM NOVO DOCUMENTO, copie o modelo abaixo e cole no final:
+//   DOCS.push({ id:'meu_doc', title:'Título do Documento', category:'categoria', content:`
+//     Conteúdo aqui...
+//   ` });
+// =============================================================================
 
 const DOCS = [];
 
-// ── Função de busca RAG simples ──────────────────────────────
+// ── Funções de busca e exportação (não alterar) ───────────────────────────────
+
 export function findRelevantDocs(query, maxDocs = 8) {
   const q = query.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const kws = q.split(/\s+/).filter(w => w.length > 3);
   if (!kws.length) return DOCS.slice(0, maxDocs);
-
   return DOCS
     .map(doc => {
       const haystack = (doc.title + ' ' + doc.category + ' ' + doc.content)
@@ -23,247 +39,279 @@ export function findRelevantDocs(query, maxDocs = 8) {
     .map(s => s.doc);
 }
 
-// ── Contexto completo como string ────────────────────────────
 export function buildContextString() {
   return DOCS.map(d => `===== ${d.title.toUpperCase()} =====\n${d.content}`).join('\n\n');
 }
 
-// ── Documentos ───────────────────────────────────────────────
+export { DOCS };
 
-DOCS.push({ id:'apresentacao', title:'Apresentação Fontes Regras Matriz', category:'regras', content:`BASE DE CONTEXTO E PESQUISA – UNASLAF
+
+// =============================================================================
+// SEÇÃO 1 — REGRAS E INSTRUÇÕES DO AGENTE DE IA
+// =============================================================================
+// Este documento define o comportamento da IA: como ela deve responder,
+// o que pode e não pode dizer, e quais são as prioridades de atendimento.
+// Edite aqui caso queira mudar o perfil ou tom do atendente virtual.
+// =============================================================================
+
+DOCS.push({
+  id: 'apresentacao',
+  title: 'Apresentação Fontes Regras Matriz',
+  category: 'regras',
+  content: `BASE DE CONTEXTO E PESQUISA – UNASLAF
 
 FINALIDADE
-Este arquivo foi estruturado para alimentar base de conhecimento de agente virtual com IA, com foco em atendimento institucional da UNASLAF, pesquisa contextual e recuperação por embeddings/RAG.
+Este arquivo alimenta a base de conhecimento do agente virtual com IA da UNASLAF,
+com foco em atendimento institucional, pesquisa contextual e recuperação por RAG.
 
 POLÍTICA DE DADOS APLICADA
 - Foram excluídos dados pessoais de endereço e documentos de identificação civil.
 - Foram mantidos nome, CPF e matrícula SIAPE/matrícula funcional.
-- Para atendimento automatizado, NÃO expor listas completas de associados em conversas abertas.
-- A IA não deve dar parecer jurídico definitivo. Deve responder de forma institucional e encaminhar casos concretos ao jurídico da UNASLAF.
-- Status processuais atualizados até julho/2023. Para andamento atual, consultar PJe/eproc/STF/STJ/TJDFT.
+- A IA NÃO deve expor listas completas de associados em conversas abertas.
+- A IA não deve dar parecer jurídico definitivo. Deve responder de forma
+  institucional e encaminhar casos concretos ao jurídico da UNASLAF.
+- Status processuais atualizados até julho/2023. Para andamento atual,
+  consultar PJe/eproc/STF/STJ/TJDFT.
 
 REGRAS DE RESPOSTA:
 [REGRA 1] Responder em português do Brasil, tom cordial, institucional e seguro.
 [REGRA 2] Não prometer pagamento, prazo, implantação ou vitória judicial.
-[REGRA 3] Quando tema for ADI 4151, distinguir: Analista do Seguro Social, Técnico do Seguro Social, ativos, aposentados, pensionistas, redistribuídos e optantes pelo retorno ao INSS.
-[REGRA 4] Quando tema for ação coletiva, informar que resposta tem base no relatório de julho/2023 e recomendar confirmação do andamento atual.
-[REGRA 5] Pergunta individual ("tenho direito?", "estou na lista?"): verificar CPF/SIAPE em ambiente seguro/autenticado.
+[REGRA 3] Quando tema for ADI 4151, distinguir: Analista do Seguro Social,
+          Técnico do Seguro Social, ativos, aposentados, pensionistas,
+          redistribuídos e optantes pelo retorno ao INSS.
+[REGRA 4] Quando tema for ação coletiva, informar que resposta tem base no
+          relatório de julho/2023 e recomendar confirmação do andamento atual.
+[REGRA 5] Pergunta individual ("tenho direito?", "estou na lista?"):
+          verificar CPF/SIAPE em ambiente seguro/autenticado.
 [REGRA 6] Não divulgar lista completa de associados. Usar apenas para consulta interna.
-[REGRA 7] Se pedir orientação jurídica definitiva: "Essa análise depende da verificação documental individual e deve ser encaminhada ao jurídico da UNASLAF."
-[REGRA 9] Conflito entre documento antigo e informação posterior: priorizar informação mais recente validada pela Diretoria/Jurídico.
-[REGRA 10] Em dúvida: "Com base nos documentos disponíveis..." ou "O documento analisado indica...".
+[REGRA 7] Se pedir orientação jurídica definitiva: encaminhar ao jurídico da UNASLAF.
+[REGRA 9] Conflito entre documento antigo e informação posterior: priorizar
+          informação mais recente validada pela Diretoria/Jurídico.
+[REGRA 10] Em dúvida: "Com base nos documentos disponíveis..." ou
+           "O documento analisado indica...".
 
 MATRIZ DE PERTINÊNCIA:
-[Alta pertinência] ADI 4151, Portarias 7.243 e 9.546, Relatório de ações coletivas, Estatuto.
-[Pertinência condicionada] Regimento Eleitoral (dúvidas eleitorais/assembleias), Lista 28% (consulta interna).
-[Baixa pertinência] Conclusões jurídicas individualizadas → encaminhar ao jurídico.` });
+[Alta] ADI 4151, Portarias 7.243 e 9.546, Ações coletivas, Estatuto.
+[Condicionada] Regimento Eleitoral (dúvidas eleitorais), Lista 28% (consulta interna).
+[Baixa] Conclusões jurídicas individualizadas → encaminhar ao jurídico.`
+});
 
-DOCS.push({ id:'estatuto', title:'Estatuto UNASLAF Base Operacional', category:'estatuto', content:`ESTATUTO UNASLAF – BASE OPERACIONAL
 
-1. Natureza, denominação, sede e finalidade institucional
-- A UNASLAF é associação nacional, pessoa jurídica de direito privado, sem fins econômicos, com duração indeterminada e jurisdição nacional.
-- Tem personalidade jurídica distinta da de seus filiados; os associados não respondem ativa, passiva, solidária ou subsidiariamente pelas obrigações da entidade.
-- É entidade democrática, sem caráter político-partidário ou religioso, independente e autônoma em relação ao Estado.
-- Finalidade geral: defesa, organização, coordenação, proteção de direitos e interesses coletivos e individuais e representação profissional de seus associados.
+// =============================================================================
+// SEÇÃO 2 — INFORMAÇÕES INSTITUCIONAIS DA UNASLAF
+// =============================================================================
+// Estatuto e regimento eleitoral da entidade.
+// Atualize aqui caso haja mudanças estatutárias ou no processo eleitoral.
+// =============================================================================
 
-2. Prerrogativas essenciais da UNASLAF
+DOCS.push({
+  id: 'estatuto',
+  title: 'Estatuto UNASLAF Base Operacional',
+  category: 'estatuto',
+  content: `ESTATUTO UNASLAF – BASE OPERACIONAL
+
+1. NATUREZA E FINALIDADE
+- A UNASLAF é associação nacional, pessoa jurídica de direito privado,
+  sem fins econômicos, com duração indeterminada e jurisdição nacional.
+- CNPJ: 73.369.795/0001-83
+- Sede: SCN-Qd.6-Bloco A, Ed. Venâncio 3000, 4º andar, salas 413/414, Brasília-DF
+- Site: https://unaslaf.org.br
+- Entidade democrática, sem caráter político-partidário ou religioso.
+- Finalidade: defesa, organização, proteção de direitos e interesses coletivos
+  e individuais e representação profissional de seus associados.
+
+2. PRERROGATIVAS ESSENCIAIS
 - Representar os associados perante os poderes públicos e a sociedade.
-- Colaborar como órgão técnico e consultivo no estudo e solução de problemas da categoria.
-- Organizar e apoiar atividades assistenciais, sociais, científicas, técnicas e culturais.
-- Atuar judicial e extrajudicialmente como substituta processual, nos termos constitucionais aplicáveis.
-- Defender a democracia, as liberdades individuais e coletivas, o Estado Democrático de Direito, as instituições democráticas e os direitos humanos.
-- Propor medidas, encaminhamentos e requerimentos às autoridades administrativas e judiciais quando pertinentes à defesa dos associados.
+- Atuar judicial e extrajudicialmente como substituta processual.
+- Defender a democracia, as liberdades individuais e coletivas,
+  o Estado Democrático de Direito e os direitos humanos.
+- Propor medidas e requerimentos às autoridades administrativas e judiciais.
 
-3. Objetivos institucionais
-- Congregar servidores da extinta Secretaria da Receita Previdenciária, ativos e inativos, em defesa de seus direitos.
-- Defender interesses dos associados e da categoria profissional perante autoridades e no âmbito administrativo e judicial.
-- Promover a unidade, congregação, desenvolvimento social, cultural e comunitário dos associados.
-- Manter contato e intercâmbio com entidades públicas e privadas, preservando a autonomia e independência da UNASLAF.
-- Defender direitos e interesses profissionais coletivos e individuais dos associados em juízo ou fora dele.
-- Encaminhar manifestações, solicitações e pleitos às autoridades.
+3. QUEM PODE SER ASSOCIADO
+- Associado natural: servidor que estava em efetivo exercício na Secretaria
+  da Receita Previdenciária em 16/03/2007.
+- Associado participante: pensionista dos servidores acima indicados.
+- NÃO podem associar-se os ocupantes do cargo de Auditor-Fiscal da Previdência Social.
 
-4. Associados: filiação, categorias e requisitos
-- A admissão ao quadro social obedece às normas do Estatuto, mediante proposta própria apresentada à UNASLAF.
-- O quadro associativo é composto por associados naturais e participantes.
-- Associado natural: servidor que se encontrava em efetivo exercício na Secretaria da Receita Previdenciária ou nas unidades técnicas administrativas a ela vinculadas em 16/03/2007.
-- Associado participante: pensionista dos servidores indicados no Estatuto.
-- Não podem associar-se os ocupantes do cargo originário de Auditor-Fiscal da Previdência Social.
+4. DIREITOS DOS ASSOCIADOS
+- Participar das Convenções Nacionais e votar/ser votado nas eleições.
+- Frequentar a sede e gozar dos serviços e benefícios da entidade.
+- Apresentar propostas e recorrer de atos que entendam lesivos a seus direitos.
 
-5. Direitos dos associados
-- Participar das Convenções Nacionais, exercendo liberdade de discussão e opinião.
-- Frequentar a sede da entidade.
-- Gozar dos serviços e benefícios oferecidos indistintamente pela entidade.
-- Apresentar propostas e sugestões aos órgãos representativos da UNASLAF.
-- Recorrer de atos e decisões que entendam lesivos a seus direitos.
-- Votar e ser votado nas eleições da UNASLAF, desde que preenchidas as condições estatutárias.
+5. DEVERES DOS ASSOCIADOS
+- Cumprir as normas do Estatuto e pagar mensalidades regularmente.
+- Zelar pela imagem da UNASLAF e tratar dirigentes com respeito e urbanidade.
 
-6. Deveres dos associados
-- Cumprir as normas do Estatuto.
-- Acatar decisões dos órgãos representativos da entidade.
-- Contribuir regularmente com as mensalidades estabelecidas.
-- Colocar interesses gerais acima de interesses pessoais ou individuais.
-- Apoiar iniciativas da entidade e participar de atividades institucionais.
-- Zelar pela imagem da UNASLAF e tratar dirigentes e associados com respeito, dignidade e urbanidade.
-- Atender aos princípios do Código de Ética.
+6. SANÇÕES DISCIPLINARES
+- Advertência, multa (até 5x a mensalidade), perda de mandato e exclusão.
+- Prazo de apuração: 30 dias, prorrogável por igual período.
+- Da decisão cabe recurso em 5 dias ao Conselho Executivo.
 
-7. Sanções disciplinares
-- Sanções possíveis: advertência, multa, perda de mandato e exclusão do quadro social.
-- Advertência: aplicável, por escrito, pelo Presidente, após decisão do Conselho Executivo.
-- Multa: até cinco vezes o valor da mensalidade associativa.
-- Perda de mandato: aplicável a associado eleito que deixe de tomar posse, falte injustificadamente, seja declarado inidôneo, etc.
-- Exclusão do quadro social: aplicável por reincidência, inadimplência prolongada, atos graves.
+7. ORGANIZAÇÃO DA UNASLAF
+- Órgãos: Assembleia Geral (máxima autoridade), Conselho Executivo,
+  Conselho Fiscal e Conselho de Ética.
+- Conselho Executivo: Presidente, Vice-Presidente, Diretores de Finanças,
+  Política de Classe, Comunicação, Jurídico, Parlamentar e Inativos.
 
-8. Processo apuratório do procedimento disciplinar
-- O Presidente do Conselho de Ética deve designar relator após tomar conhecimento de transgressões.
-- Prazo ordinário de apuração: 30 dias, prorrogável por igual período.
-- Da decisão cabe recurso em cinco dias ao Conselho Executivo.
+8. RECEITA E ORÇAMENTO
+- Receita: contribuições mensais, rendas de convênios, doações, subvenções.
+- Orçamento anual elaborado pelo Conselho Executivo.`
+});
 
-9. Organização da UNASLAF
-- Órgãos/poderes: Assembleia Geral, Conselho Executivo, Conselho Fiscal e Conselho de Ética.
-- Assembleia Geral é órgão máximo e soberano; delibera matéria de interesse da entidade e elege dirigentes.
-- Conselho Executivo é órgão administrador e executor das normas estatutárias e deliberações.
+DOCS.push({
+  id: 'regimento',
+  title: 'Regimento Assembleias Processo Eleitoral',
+  category: 'regimento_eleitoral',
+  content: `REGIMENTO DAS ASSEMBLEIAS E DO PROCESSO ELEITORAL
 
-10. Conselho Executivo
-- Composto por Presidente, Vice-Presidente, Diretor de Finanças, Diretor de Política de Classe, Diretor de Comunicação Social, Diretor de Assuntos Jurídicos, Diretor de Assuntos Parlamentares e Diretor de Inativos.
+1. ASSEMBLEIAS
+- Deliberações por voto dos associados naturais.
+- Delegados estaduais: 1 por 30 associados ou fração, mínimo 1 por Estado.
 
-11. Receita, despesa e orçamento
-- Receita inclui contribuições mensais, rendas de convênios, doações, legados, subvenções, auxílios, rendimentos e outras receitas aprovadas.
-- Orçamento anual deve ser elaborado pelo Conselho Executivo, com previsão de receitas e despesas.` });
+2. ELEIÇÕES — REGRAS GERAIS
+- Realizadas com antecedência mínima de 30 dias antes do fim do mandato.
+- Convocadas pelo Presidente por edital com antecedência mínima de 60 dias.
+- Edital publicado no site oficial.
 
-DOCS.push({ id:'regimento', title:'Regimento Assembleias Processo Eleitoral', category:'regimento_eleitoral', content:`REGIMENTO DAS ASSEMBLEIAS E DO PROCESSO ELEITORAL – BASE OPERACIONAL
+3. ELEGIBILIDADE
+São elegíveis os associados naturais que:
+  a) preencham condições estatutárias
+  b) não incorram em impedimentos expressos no regimento
+  c) estejam filiados à UNASLAF por pelo menos 3 anos
+  d) participem de chapa completa registrada
 
-1. Assembleias
-- Deliberações nas assembleias da UNASLAF são realizadas por voto dos associados naturais.
-- Convencionais delegados representantes dos filiados são associados naturais eleitos nos Estados e no Distrito Federal, na proporção de 1 delegado por 30 associados ou fração, respeitado mínimo de 1 delegado por Estado.
-- A escolha dos Delegados Estaduais é realizada por reunião de associados naturais, convocada na forma regimental.
+4. ELEITOR
+- Associado natural em pleno gozo dos direitos sociais e quite com mensalidades
+  na data da publicação do edital.
 
-2. Época das eleições
-- Eleições da UNASLAF devem ocorrer, sempre que possível, com antecedência mínima de 30 dias antes do término do mandato da diretoria em exercício.
+5. VOTO
+- Individual, secreto, direto e qualificado.
+- Pode ser realizado por cédula ou sistema eletrônico/correio.
 
-3. Elegibilidade
-- São elegíveis para Diretoria Executiva, Conselho Fiscal e Conselho de Ética os associados naturais que:
-  a) preencham condições estatutárias;
-  b) não incorram em impedimentos expressos no regimento;
-  c) estejam filiados à UNASLAF por pelo menos 3 anos;
-  d) participem de chapa completa registrada.
+6. INSCRIÇÃO DE CHAPAS
+- Prazo: 20 dias da publicação do edital.
+- Comissão Eleitoral conduz votação, apuração e proclamação do resultado.
 
-4. Qualificação do eleitor
-- É qualificado como eleitor todo associado natural que, na data de publicação do edital de convocação, esteja em pleno gozo dos direitos sociais e quite com a contribuição mensal.
+7. IMPUGNAÇÕES E RECURSOS
+- Impugnação: 3 dias da publicação da relação de chapas registradas.
+- Recurso: 10 dias da divulgação oficial do resultado.
 
-5. Voto
-- Voto é individual, secreto, direto e qualificado.
-- Voto pode ser feito por meio de cédula ou sistema eletrônico/correio, conforme regras do edital.
-
-6. Publicação e convocação das eleições
-- Eleições são convocadas pelo Presidente da UNASLAF por edital com antecedência mínima de 60 dias.
-- Edital deve ser publicado no site oficial.
-
-7. Inscrição de chapas/candidatos e Comissão Eleitoral
-- Prazo para inscrição de chapa e candidatos: 20 dias contados da publicação do edital.
-- Comissão Eleitoral é designada pelo Presidente; conduz processo de eleição, votação, apuração e proclamação do resultado.
-
-8. Impugnações
-- Prazo de impugnação: 3 dias contados da publicação da relação nominal das chapas registradas.
-- Impugnação deve versar sobre causas de inelegibilidade previstas no Estatuto ou Regimento.
-
-9. Apuração de votos
+8. APURAÇÃO E POSSE
 - Maioria simples de votos elege a chapa.
-- Em caso de empate, realiza-se nova votação limitada às chapas empatadas.
+- Empate: nova votação entre as chapas empatadas.
+- Posse: até o último dia útil do mandato da diretoria em exercício.`
+});
 
-10. Recursos
-- Prazo para interposição: 10 dias, contado da divulgação oficial do resultado.
 
-11. Posse
-- Posse dos eleitos ocorre após proclamação do resultado, até no máximo o último dia útil do mandato da diretoria em exercício.` });
+// =============================================================================
+// SEÇÃO 3 — ADI 4151 (AÇÃO MAIS IMPORTANTE DA UNASLAF)
+// =============================================================================
+// A ADI 4151 é a principal ação da entidade. Atualiza o histórico abaixo
+// sempre que houver nova movimentação no STF ou nova portaria administrativa.
+// =============================================================================
 
-DOCS.push({ id:'adi_4151', title:'ADI 4151 Base Contexto Respostas', category:'adi_4151', content:`ADI 4151 – BASE DE CONTEXTO E RESPOSTAS
+DOCS.push({
+  id: 'adi_4151',
+  title: 'ADI 4151 Base Contexto Respostas',
+  category: 'adi_4151',
+  content: `ADI 4151 – BASE DE CONTEXTO E RESPOSTAS
 
-[RESUMO EXECUTIVO]
-A ADI 4151 constitui o eixo de defesa jurídica dos servidores redistribuídos da extinta Receita Previdenciária para a Receita Federal do Brasil. A linha institucional da UNASLAF enfatiza a longa jornada legislativa e judicial, a derrubada do Veto 8/2009, o julgamento conjunto das ADIs 4151, 4616 e 6966, o reconhecimento dos Analistas e, posteriormente, a inclusão dos Técnicos via embargos de declaração.
-
-[TESES-CHAVE PARA CHATBOT]
-- A tese central envolve a inclusão de cargos previdenciários nos preceitos e efeitos do art. 10, II, da Lei 11.457/2007.
-- Analistas do Seguro Social: direito reconhecido com marco temporal de efeitos a partir de 07/04/2022.
-- Técnicos do Seguro Social: direito reconhecido com marco temporal de efeitos a partir de 06/09/2024.
-- Pagamento em folha desde 01/01/2025.
-- Limites: não alcança servidores que optaram voluntariamente pelo retorno ao INSS ou que não foram efetivamente redistribuídos à RFB.
-- Tema dos inativos: deve ser tratado com cuidado, considerando segurança jurídica, paridade/integralidade quando aplicável e análise jurídica específica.
-
-[PERGUNTAS E RESPOSTAS SUGERIDAS]
-Pergunta: Quem tem direito à ADI 4151?
-Resposta: A decisão alcança servidores da carreira do Seguro Social redistribuídos para a Receita Federal do Brasil, incluindo Analistas e Técnicos, observados os limites da decisão e a situação individual de cada servidor.
-
-Pergunta: Qual o marco temporal dos Analistas?
-Resposta: Marco de efeitos a partir de 07/04/2022 para Analistas do Seguro Social.
-
-Pergunta: Qual o marco temporal dos Técnicos?
-Resposta: Marco de efeitos a partir de 06/09/2024 para Técnicos do Seguro Social. Pagamento em folha desde 01/01/2025.
-
-Pergunta: Quem não é alcançado?
-Resposta: Quem optou voluntariamente pelo retorno ao INSS e quem não foi efetivamente redistribuído à Receita Federal do Brasil.
-
-Pergunta: Aposentados e pensionistas estão incluídos?
-Resposta: Há portaria administrativa que enquadrou aposentados e instituidores de pensão ocupantes do cargo de Analista do Seguro Social. Para Técnicos e demais situações, é necessária análise individual.
-
-Pergunta: Posso ajuizar ação individual?
-Resposta: O associado deve consultar o jurídico da UNASLAF antes de qualquer medida individual, para evitar conflito com a estratégia coletiva.
-
-HISTÓRICO CRONOLÓGICO:
-2008 | Ajuizamento da ADI 4151
-2007–2021 | A Luta Legislativa: 14 anos de atuação da UNASLAF
-19/04/2021 | Marco Histórico: Congresso Nacional derruba o Veto 8 de 2009 (380 votos na Câmara / 50 no Senado)
-08/2021 | Ajuizamento da ADI 6966 – Liminar suspendendo derrubada do veto
-04/2022 | ADI 6966 – Reforma da Liminar favorável aos Analistas Previdenciários
-11/2023 | Julgamento de mérito das ADIs 4151, 4616 e 6966 – ratifica liminar e reconhece direito dos Analistas (omissa quanto aos técnicos)
-08/2024 | ADI 4151 – Julgamento dos embargos da UNASLAF – STF reconhece o direito dos Técnicos Previdenciários
-09/2024 | ADI 4151 – Embargos de Declaração da AGU
-29/10/2025 | Incluído em pauta de 14 a 25/11/2025
-13/11/2025 | Retirado de pauta
-25/11/2025 | Incluído em pauta de 12 a 19/12/2025
-11/12/2025 | Retirado de pauta
-18/12/2025 | Incluído em pauta de 13 a 24/02/2026
-13/02/2026 | Início julgamento – Voto do relator Ministro GILMAR MENDES acompanhado pelos Ministros CRISTIANO ZANIN E FLÁVIO DINO (TOTAL 3 VOTOS)
-23/02/2026 | Julgamento Suspenso com pedido de vista do Ministro Dias Toffoli
-04/03/2026 | Incluído em pauta de 13 a 20/03/2026
-13/03/2026 | Retorno do julgamento - Voto favorável do Ministro Dias Toffoli (TOTAL 4 VOTOS)
-16/03/2026 | JULGAMENTO SUSPENSO com pedido de vista do Ministro Alexandre de Moraes
-
-STATUS ATUAL (março/2026): JULGAMENTO SUSPENSO. Pedido de vista Min. Alexandre de Moraes. 4 votos favoráveis já computados. Ponto central: extensão definitiva dos efeitos para os servidores ativos e inativos e a modulação final dos efeitos financeiros e administrativos.
+RESUMO EXECUTIVO
+A ADI 4151 é o eixo central da defesa jurídica dos servidores redistribuídos
+da extinta Receita Previdenciária para a Receita Federal do Brasil.
+Questiona a inclusão de cargos previdenciários nos preceitos do art. 10, II,
+da Lei 11.457/2007.
 
 DIREITOS RECONHECIDOS:
-Cargo | Direito Reconhecido? | Marco Temporal (Efeitos)
-Analista do Seguro Social | SIM | A partir de 07/04/2022
-Técnico do Seguro Social | SIM | A partir de 06/09/2024
+Cargo                        | Direito? | Marco Temporal dos Efeitos
+Analista do Seguro Social    | SIM      | A partir de 07/04/2022
+Técnico do Seguro Social     | SIM      | A partir de 06/09/2024
+(Pagamento em folha desde 01/01/2025)
 
-LIMITES DA DECISÃO:
-01 - Opção de Retorno: Servidores que optaram voluntariamente pelo retorno ao quadro de pessoal do INSS não são beneficiados.
-02 - Não Redistribuídos: Servidores que não foram efetivamente redistribuídos à Receita Federal do Brasil.
+QUEM NÃO É ALCANÇADO:
+- Servidores que optaram voluntariamente pelo retorno ao INSS
+- Servidores não efetivamente redistribuídos à Receita Federal do Brasil
 
-FUNDAMENTOS: Princípio da Isonomia. Art. 10, II, Lei 11.457/2007. Voto condutor: Min. Gilmar Mendes.
+SITUAÇÃO DOS INATIVOS:
+- Aposentados e instituidores de pensão Analistas: enquadrados pela Portaria 9.546/2022
+- Técnicos inativos: requer análise jurídica individual
 
-CANAIS OFICIAIS DA UNASLAF:
-www.unaslaf.org.br | unaslaf@unaslaf.org.br | WhatsApp - Notas Oficiais` });
+PERGUNTAS E RESPOSTAS FREQUENTES:
+P: Quem tem direito à ADI 4151?
+R: Servidores da carreira do Seguro Social redistribuídos para a RFB,
+   incluindo Analistas e Técnicos, observados os marcos temporais.
 
-DOCS.push({ id:'portaria_7243', title:'Portaria 7243 2022 Analistas Ativos', category:'portarias_enquadramento', content:`PORTARIA 7.243/2022 – ANALISTAS ATIVOS
+P: Posso ajuizar ação individual?
+R: Consulte o jurídico da UNASLAF antes de qualquer medida individual,
+   para evitar conflito com a estratégia coletiva.
 
-[USO PARA CHATBOT]
-Documento administrativo que enquadra, no cargo de Analista-Tributário da Receita Federal do Brasil, Classe S, Padrão III, servidores então ocupantes do cargo de Analista do Seguro Social, com efeitos a contar de 07/04/2022. A lista nominal contém matrícula SIAPE e nome. O agente pode usar para conferência individual por nome ou SIAPE, evitando divulgação em massa.
+HISTÓRICO CRONOLÓGICO:
+2008         | Ajuizamento da ADI 4151
+19/04/2021   | Congresso derruba Veto 8/2009 (380 votos Câmara / 50 Senado)
+08/2021      | Ajuizamento da ADI 6966 — liminar suspendendo a derrubada do veto
+04/2022      | ADI 6966 — reforma da liminar favorável aos Analistas
+11/2023      | Julgamento de mérito das ADIs 4151, 4616 e 6966 — reconhece direito dos Analistas
+08/2024      | Julgamento dos embargos da UNASLAF — STF reconhece direito dos Técnicos
+09/2024      | Embargos de Declaração da AGU
+13/02/2026   | Início do julgamento — 3 votos favoráveis (Gilmar Mendes, Zanin, Flávio Dino)
+13/03/2026   | Retorno — 4º voto favorável (Dias Toffoli)
+16/03/2026   | Julgamento suspenso — pedido de vista Min. Alexandre de Moraes
+
+STATUS ATUAL (março/2026):
+JULGAMENTO SUSPENSO. Pedido de vista do Min. Alexandre de Moraes.
+4 votos favoráveis já computados.
+Ponto central: extensão definitiva dos efeitos para ativos e inativos
+e modulação final dos efeitos financeiros e administrativos.
+
+FUNDAMENTOS: Princípio da Isonomia. Art. 10, II, Lei 11.457/2007.
+CANAIS OFICIAIS: www.unaslaf.org.br | unaslaf@unaslaf.org.br`
+});
+
+
+// =============================================================================
+// SEÇÃO 4 — PORTARIAS DE ENQUADRAMENTO
+// =============================================================================
+// Portarias que formalizaram o enquadramento dos servidores após a ADI 4151.
+// Portaria 7.243/2022: Analistas ATIVOS
+// Portaria 9.546/2022: Analistas APOSENTADOS e INSTITUIDORES DE PENSÃO
+// =============================================================================
+
+DOCS.push({
+  id: 'portaria_7243',
+  title: 'Portaria 7243 2022 Analistas Ativos',
+  category: 'portarias_enquadramento',
+  content: `PORTARIA 7.243/2022 – ANALISTAS DO SEGURO SOCIAL ATIVOS
 
 PORTARIA DE PESSOAL DGP/SGC/SE/ME Nº 7.243, DE 28 DE JUNHO DE 2022
 
-Art. 1º Enquadrar no cargo de Analista Tributário da Receita Federal do Brasil, Classe S, Padrão III, da Carreira Tributária e Aduaneira da Receita Federal do Brasil, os servidores elencados no anexo desta portaria, os quais atualmente ocupam o cargo de Analista do Seguro Social, com efeitos a contar de 7 de abril de 2022.
+Art. 1º Enquadrar no cargo de Analista Tributário da Receita Federal do Brasil,
+Classe S, Padrão III, da Carreira Tributária e Aduaneira da RFB, os servidores
+elencados no anexo desta portaria, os quais atualmente ocupam o cargo de
+Analista do Seguro Social, com efeitos a contar de 7 de abril de 2022.
+
+USO PARA ATENDIMENTO:
+Consultar por matrícula SIAPE ou nome para verificação individual.
+Não divulgar lista completa em atendimento aberto.
 
 LISTA DE ANALISTAS ENQUADRADOS (SIAPE | NOME):
-1376007 ADEMIR MIGUEL | 1376019 ADRIANA SATIE OSHIRO | 1378392 ADRIANA SQUERICH STANIECKI | 1451804 ADRIANO KISHIMOTO | 1375281 AILTON DE MELO MESSIAS JUNIOR | 1444748 ALECSANDRA FRANCO DE MELO | 1375125 ALEXANDRE CREMER | 1449803 ALEXANDRE DE LIMA E SILVA | 1376114 ALOISIO BARBOSA CAMPOS | 1451877 ANA CATARINA DE LUCENA | 1440179 ANA KARLA JALES DANTAS | 1379056 ANDERSON JACO MARAN | 1453527 ANDERSON JOSE RIBEIRO SALEME | 1374985 ANDRE GIORDANI SANTOS SILVA | 1453000 ANDREA GRANGEIRO GOMES LEITAO | 1432129 ANDREIA CRISTINA MARQUES OTERO | 1441776 ANGELA BOSSO FARIA BRITO | 1378136 ANGELA REGINA FERNANDES PAVANI | 1450553 ANTONIO CARLOS ROCHA MOREIRA | 1380487 ANTONIO VENANCIO CARDOSO | 1418325 BENARDETE MARIA TOMAZI | 1450030 CARINE GISELE HANKE | 1418718 CARLOS ROBERTO THOME | 1450005 CAROLINA SCIAMARELLI RELA | 1377645 CAROLINA VIVAN CARVALHO | 1379061 CECILIO FELINTO DE OLIVEIRA NETO | 1376613 CELIA MARIA SANCHES LOURINHO QUEIROZ | 1375992 CESAR CARLOS RIBEIRO | 1375953 CHARLES ARAUJO | 1450819 CLAUDIR CORREA LEMOS | 1377932 CLEY ANDERSON DE FREITAS BITTENCOURT | 1376370 CRISTIANE WEIS | 1376424 DAISY LUCI RIBEIRO DE ARAGAO HEREDA | 1378511 DANIEL DE OLIVEIRA LEMOS | 1446246 DANIEL TANIGUCHI | 1376972 DANIELA BARROSO COSTA BADARO | 1351009 DANIELA GODOY DE VASCONCELLOS | 1377227 DANIELE MAIA TOURAO | 1380134 DANNIELLI DONINI CAMPOLIM | 1376218 DENISE MARTINEZ GONCALVES | 1435325 DIEGO MARTINES SENGER | 1376661 DORIS BECK PAMPLONA SOARES | 1378508 EDIMAR RIBEIRO AMORIM | 1432850 EDUARDO SANTOS FELISMINO | 1451654 EDVAN TEIXEIRA DE SOUSA | 1450471 ELIZABETH AURELIA DE ANTONI | 1376652 ELZA HELENA MARTINS FONTANA | 1450248 EMANUELLE SILVA PEDREIRA | 1442793 EMILIA MARIA DE SANTANA | 1379914 ENEDINA PINHEIRO SIMAO AZEVEDO | 1452771 EVERSON JAIR CASAGRANDE MOREIRA | 1377393 FABIANA CRISTINA DE MELLO | 1420697 FABIANA DE TONI MARQUES DE OLIVEIRA | 1361701 FABIO DOS ANJOS BARBOSA | 1426182 FERNANDA MION CRUZ | 1376198 FLAVIA MARIA RUBACK CASCARDO DE ALMEIDA | 1450017 FLAVIA SILVA BARBOSA | 1418658 FLAVIA TAZINAFFO RODRIGUES DE FARIA | 1375911 FLAVIANA DE CARVALHO CHAVES DUTRA | 1098434 FRANCISCO VALDILEME RIBEIRO MOTA | 1450205 GEIZA CELESTE DA SILVA ASSUNCAO | 1379286 GEORGE CAVALCANTI CAMELO | 1380280 GLACYELLE BECE SIMOES GAHIVA | 1380819 GRAZIELA PIMENTEL | 1376846 GRAZIELLE DA HORA BARAUNA | 1420286 GUILHERME BRUNOW NOGUEIRA | 1377428 HELMUT FERNANDO ROLKE | 1379742 ISABELA DE SA BEZ GRAHL | 1437745 ISABELE CRISTINA BARBERO PERES BALDISERA | 1449804 IVANI DAS GRACAS DAL PRA LAZAROTTO | 1376741 JACKELINE NUNES DA SILVA | 1418142 JEFERSON BARBOSA BARRIONUEVO | 1425198 JOANA DARC DOS SANTOS NASCIMENTO | 1379502 JOAO DE SOUSA MOTA NETO | 1450969 JORGE PEDRO BANDEIRA DORES | 1418737 JOSE ANTONIO BAPTISTA DE ABREU | 1452346 JOSE DONIZETE DE PAULA | 1376319 JOSE TAIRONE RODRIGUES DA SILVA | 1375290 JOSILENE GIOVANA IDALGO BALBINO BELFORT | 1376388 JULIANA FIASCHI DOTTO | 1452721 JULIANA WOHLGEMUTH FLEURY VELOSO DA SILVEIRA | 1285610 JULIANO BATISTA BOHNERT | 1418477 KAMILLE MARIA CORDEIRO FERNANDES | 1378816 KARINA CRESTANI DE SOUZA MEGALE | 1378853 KARINA MARANHA | 1379690 KIYOKA YONEYA GENDA | 1377433 KLEBER MOURA DO NASCIMENTO | 1450047 LECI MARTINS BARBOSA | 1377136 LILIAN CRISTINA SALDANHA | 1377983 LUCIANA APARECIDA DA SILVA | 1452965 LUCIANA TREVENZOLI VALLE | 1450910 LUCIANE DE FATIMA SOUZA DA SILVA | 1451162 LUIZ ANTONIO TELO | 1380193 LUIZ HENRIQUE VILLAR GUIMARAES | 0941679 LUIZA HELENA ULIANO | 1377115 MAGALI APARECIDA FLORENCIO RAZERA | 1377036 MARCELO DOMINGUES LEMOS | 1451223 MARCELO GOMES DA SILVA | 1378916 MARCELO MORGANTE | 0910657 MARCO ANTONIO FIGUEIREDO | 1453823 MARCOS SOUZA OLIVEIRA | 1376715 MARIA FERNANDA VASQUES LESSA | 1374992 MARIA JOSE SOUZA DE MOURA | 0933763 MARIA PERPETUO SOCORRO NOVAES SOUTO | 1377330 MARIA SALETE COSTA | 1376204 MARLEY FERNANDA ARAUJO RABELLO MEDINA | 1377838 MARTHA DE CARVALHO BRESSER DORES | 1378351 MARTHA FRANCA CAMARA | 1449864 MAURA RIGON MACHADO | 1440123 MICHELE NAIRA SALOMAO | 1420132 MILTON NOBUHIRO ITAGAKI | 1377500 MURILO VIOLA | 1450113 NAIR SANAE KIYOTA | 1377945 NANCY YARA GRILLI | 1378934 NELSON PEREIRA VILASBOAS | 1418392 ODAMIR FEITOSA DE SA FILHO | 1375364 OLGA MARIA CARDOSO DE SOUZA | 1443462 OSCAR FERNANDO DE MATTOS FILHO | 1445465 OSVALDO YOSHIHARU HIRAMA | 1446275 PATRICIA CINTIA MACHADO | 1375940 PRISCILA NUBIA DA SILVA | 1445723 RAQUEL CRISTINA DARONCO RADIS | 1449868 RENATA APARECIDA AGUIAR DA SILVA | 1450637 RENATA PESTILHO SENNA | 1376654 RITA MARIA CRUZ FREITAS | 1379224 ROBSON RODRIGUES MACHADO | 1377461 ROCICLENE DE ALMEIDA BARBOSA | 1377068 RODRIGO TELLES CORREIA DAS NEVES | 1375787 RODRIGO VARELLA DOTTO | 1374682 ROMERO MOREIRA PIMENTEL | 1420811 RONI RODRIGUES DE SOUZA | 1418778 ROSANGELA SANTOS PEREIRA SILVA | 1460236 RUTILEIA DE SOUSA AGUIAR | 1420986 SABURO MORIYA | 1451188 SAMANTHA MARA BROCCO SILVA CARDOSO | 1418201 SAMANTHA SILVEIRA CORREA DE MELO | 1376306 SANDRA ALVES CRUZ MENDONCA | 1420765 SANDRA SILVA ACRAS | 1375822 SANDRO NERY DORTAS MONTARGIL | 1378514 SERGIO LUIS DA SILVA | 1451392 SERGIO LUIZ HAGEMANN | 1376777 SIMONE APARECIDA DE OLIVEIRA BUENO | 1452575 SIMONE CRISTINA VALENTIM DE PAULA BARRETO | 1450989 SOLANGE APARECIDA VIANNA CARECHO | 1375736 TATIANA FLORAO CORREA | 1450461 TERENCE FERNANDEZ XAVIER | 1376906 THELMA COLOMBO BOLLA | 1451482 TIAGO DE CASTRO RUBIATTI | 1377298 VALNI DE SOUZA | 1379182 VICENTE ARAUJO DE SOUZA VERAS NETO | 1376103 WILLIAN ANDRADE SERAFIM | 1377600 WOLFGANG ADOLFO FIEDLER` });
+1376007 ADEMIR MIGUEL | 1376019 ADRIANA SATIE OSHIRO | 1378392 ADRIANA SQUERICH STANIECKI | 1451804 ADRIANO KISHIMOTO | 1375281 AILTON DE MELO MESSIAS JUNIOR | 1444748 ALECSANDRA FRANCO DE MELO | 1375125 ALEXANDRE CREMER | 1449803 ALEXANDRE DE LIMA E SILVA | 1376114 ALOISIO BARBOSA CAMPOS | 1451877 ANA CATARINA DE LUCENA | 1440179 ANA KARLA JALES DANTAS | 1379056 ANDERSON JACO MARAN | 1453527 ANDERSON JOSE RIBEIRO SALEME | 1374985 ANDRE GIORDANI SANTOS SILVA | 1453000 ANDREA GRANGEIRO GOMES LEITAO | 1432129 ANDREIA CRISTINA MARQUES OTERO | 1441776 ANGELA BOSSO FARIA BRITO | 1378136 ANGELA REGINA FERNANDES PAVANI | 1450553 ANTONIO CARLOS ROCHA MOREIRA | 1380487 ANTONIO VENANCIO CARDOSO | 1418325 BENARDETE MARIA TOMAZI | 1450030 CARINE GISELE HANKE | 1418718 CARLOS ROBERTO THOME | 1450005 CAROLINA SCIAMARELLI RELA | 1377645 CAROLINA VIVAN CARVALHO | 1379061 CECILIO FELINTO DE OLIVEIRA NETO | 1376613 CELIA MARIA SANCHES LOURINHO QUEIROZ | 1375992 CESAR CARLOS RIBEIRO | 1375953 CHARLES ARAUJO | 1450819 CLAUDIR CORREA LEMOS | 1377932 CLEY ANDERSON DE FREITAS BITTENCOURT | 1376370 CRISTIANE WEIS | 1376424 DAISY LUCI RIBEIRO DE ARAGAO HEREDA | 1378511 DANIEL DE OLIVEIRA LEMOS | 1446246 DANIEL TANIGUCHI | 1376972 DANIELA BARROSO COSTA BADARO | 1351009 DANIELA GODOY DE VASCONCELLOS | 1377227 DANIELE MAIA TOURAO | 1380134 DANNIELLI DONINI CAMPOLIM | 1376218 DENISE MARTINEZ GONCALVES | 1435325 DIEGO MARTINES SENGER | 1376661 DORIS BECK PAMPLONA SOARES | 1378508 EDIMAR RIBEIRO AMORIM | 1432850 EDUARDO SANTOS FELISMINO | 1451654 EDVAN TEIXEIRA DE SOUSA | 1450471 ELIZABETH AURELIA DE ANTONI | 1376652 ELZA HELENA MARTINS FONTANA | 1450248 EMANUELLE SILVA PEDREIRA | 1442793 EMILIA MARIA DE SANTANA | 1379914 ENEDINA PINHEIRO SIMAO AZEVEDO | 1452771 EVERSON JAIR CASAGRANDE MOREIRA | 1377393 FABIANA CRISTINA DE MELLO | 1420697 FABIANA DE TONI MARQUES DE OLIVEIRA | 1361701 FABIO DOS ANJOS BARBOSA | 1426182 FERNANDA MION CRUZ | 1376198 FLAVIA MARIA RUBACK CASCARDO DE ALMEIDA | 1450017 FLAVIA SILVA BARBOSA | 1418658 FLAVIA TAZINAFFO RODRIGUES DE FARIA | 1375911 FLAVIANA DE CARVALHO CHAVES DUTRA | 1098434 FRANCISCO VALDILEME RIBEIRO MOTA | 1450205 GEIZA CELESTE DA SILVA ASSUNCAO | 1379286 GEORGE CAVALCANTI CAMELO | 1380280 GLACYELLE BECE SIMOES GAHIVA | 1380819 GRAZIELA PIMENTEL | 1376846 GRAZIELLE DA HORA BARAUNA | 1420286 GUILHERME BRUNOW NOGUEIRA | 1377428 HELMUT FERNANDO ROLKE | 1379742 ISABELA DE SA BEZ GRAHL | 1437745 ISABELE CRISTINA BARBERO PERES BALDISERA | 1449804 IVANI DAS GRACAS DAL PRA LAZAROTTO | 1376741 JACKELINE NUNES DA SILVA | 1418142 JEFERSON BARBOSA BARRIONUEVO | 1425198 JOANA DARC DOS SANTOS NASCIMENTO | 1379502 JOAO DE SOUSA MOTA NETO | 1450969 JORGE PEDRO BANDEIRA DORES | 1418737 JOSE ANTONIO BAPTISTA DE ABREU | 1452346 JOSE DONIZETE DE PAULA | 1376319 JOSE TAIRONE RODRIGUES DA SILVA | 1375290 JOSILENE GIOVANA IDALGO BALBINO BELFORT | 1376388 JULIANA FIASCHI DOTTO | 1452721 JULIANA WOHLGEMUTH FLEURY VELOSO DA SILVEIRA | 1285610 JULIANO BATISTA BOHNERT | 1418477 KAMILLE MARIA CORDEIRO FERNANDES | 1378816 KARINA CRESTANI DE SOUZA MEGALE | 1378853 KARINA MARANHA | 1379690 KIYOKA YONEYA GENDA | 1377433 KLEBER MOURA DO NASCIMENTO | 1450047 LECI MARTINS BARBOSA | 1377136 LILIAN CRISTINA SALDANHA | 1377983 LUCIANA APARECIDA DA SILVA | 1452965 LUCIANA TREVENZOLI VALLE | 1450910 LUCIANE DE FATIMA SOUZA DA SILVA | 1451162 LUIZ ANTONIO TELO | 1380193 LUIZ HENRIQUE VILLAR GUIMARAES | 0941679 LUIZA HELENA ULIANO | 1377115 MAGALI APARECIDA FLORENCIO RAZERA | 1377036 MARCELO DOMINGUES LEMOS | 1451223 MARCELO GOMES DA SILVA | 1378916 MARCELO MORGANTE | 0910657 MARCO ANTONIO FIGUEIREDO | 1453823 MARCOS SOUZA OLIVEIRA | 1376715 MARIA FERNANDA VASQUES LESSA | 1374992 MARIA JOSE SOUZA DE MOURA | 0933763 MARIA PERPETUO SOCORRO NOVAES SOUTO | 1377330 MARIA SALETE COSTA | 1376204 MARLEY FERNANDA ARAUJO RABELLO MEDINA | 1377838 MARTHA DE CARVALHO BRESSER DORES | 1378351 MARTHA FRANCA CAMARA | 1449864 MAURA RIGON MACHADO | 1440123 MICHELE NAIRA SALOMAO | 1420132 MILTON NOBUHIRO ITAGAKI | 1377500 MURILO VIOLA | 1450113 NAIR SANAE KIYOTA | 1377945 NANCY YARA GRILLI | 1378934 NELSON PEREIRA VILASBOAS | 1418392 ODAMIR FEITOSA DE SA FILHO | 1375364 OLGA MARIA CARDOSO DE SOUZA | 1443462 OSCAR FERNANDO DE MATTOS FILHO | 1445465 OSVALDO YOSHIHARU HIRAMA | 1446275 PATRICIA CINTIA MACHADO | 1375940 PRISCILA NUBIA DA SILVA | 1445723 RAQUEL CRISTINA DARONCO RADIS | 1449868 RENATA APARECIDA AGUIAR DA SILVA | 1450637 RENATA PESTILHO SENNA | 1376654 RITA MARIA CRUZ FREITAS | 1379224 ROBSON RODRIGUES MACHADO | 1377461 ROCICLENE DE ALMEIDA BARBOSA | 1377068 RODRIGO TELLES CORREIA DAS NEVES | 1375787 RODRIGO VARELLA DOTTO | 1374682 ROMERO MOREIRA PIMENTEL | 1420811 RONI RODRIGUES DE SOUZA | 1418778 ROSANGELA SANTOS PEREIRA SILVA | 1460236 RUTILEIA DE SOUSA AGUIAR | 1420986 SABURO MORIYA | 1451188 SAMANTHA MARA BROCCO SILVA CARDOSO | 1418201 SAMANTHA SILVEIRA CORREA DE MELO | 1376306 SANDRA ALVES CRUZ MENDONCA | 1420765 SANDRA SILVA ACRAS | 1375822 SANDRO NERY DORTAS MONTARGIL | 1378514 SERGIO LUIS DA SILVA | 1451392 SERGIO LUIZ HAGEMANN | 1376777 SIMONE APARECIDA DE OLIVEIRA BUENO | 1452575 SIMONE CRISTINA VALENTIM DE PAULA BARRETO | 1450989 SOLANGE APARECIDA VIANNA CARECHO | 1375736 TATIANA FLORAO CORREA | 1450461 TERENCE FERNANDEZ XAVIER | 1376906 THELMA COLOMBO BOLLA | 1451482 TIAGO DE CASTRO RUBIATTI | 1377298 VALNI DE SOUZA | 1379182 VICENTE ARAUJO DE SOUZA VERAS NETO | 1376103 WILLIAN ANDRADE SERAFIM | 1377600 WOLFGANG ADOLFO FIEDLER`
+});
 
-DOCS.push({ id:'portaria_9546', title:'Portaria 9546 2022 Aposentados Pensionistas', category:'portarias_enquadramento', content:`PORTARIA 9.546/2022 – ANALISTAS APOSENTADOS E INSTITUIDORES DE PENSÃO
-
-[USO PARA CHATBOT]
-Documento administrativo que enquadra servidores aposentados e instituidores de pensão ocupantes do cargo de Analista do Seguro Social no cargo de Analista-Tributário da Receita Federal do Brasil, com efeitos a partir de 07/04/2022.
+DOCS.push({
+  id: 'portaria_9546',
+  title: 'Portaria 9546 2022 Aposentados Pensionistas',
+  category: 'portarias_enquadramento',
+  content: `PORTARIA 9.546/2022 – ANALISTAS APOSENTADOS E INSTITUIDORES DE PENSÃO
 
 PORTARIA DE PESSOAL DGP/SGC/SE/ME Nº 9.546, DE 19 DE AGOSTO DE 2022
 
-Art. 1º Enquadrar os servidores aposentados e instituidores de pensão ocupantes do cargo de Analista do Seguro Social, no cargo de Analista Tributário da Receita Federal do Brasil, nas respectivas Classes e Padrões, com efeitos a partir de 7 de abril de 2022.
+Art. 1º Enquadrar os servidores aposentados e instituidores de pensão
+ocupantes do cargo de Analista do Seguro Social, no cargo de Analista
+Tributário da Receita Federal do Brasil, nas respectivas Classes e Padrões,
+com efeitos a partir de 7 de abril de 2022.
+
+USO PARA ATENDIMENTO:
+Verificação individual por nome ou SIAPE. Não divulgar lista em atendimento aberto.
 
 LISTA DE ENQUADRADOS (Nome | SIAPE | Situação | Classe):
 AUREA JI | 1450874 | APOSENTADO | S-II
@@ -287,218 +335,511 @@ PAULO AKIRA TUTIYA | 1380777 | INSTITUIDOR PENSÃO | S-II
 PEDRO AUGUSTO RAMOS | 1450455 | APOSENTADO | S-III
 PEDRO DE OLIVEIRA FILHO | 1376607 | APOSENTADO | S-II
 ROBERTO MENDES DE LIRIO | 1418759 | APOSENTADO | 1-II
-SHEILA MONIQUE SOUTO LEITE NAJAR | 0753562 | APOSENTADO | S-III` });
+SHEILA MONIQUE SOUTO LEITE NAJAR | 0753562 | APOSENTADO | S-III`
+});
 
-DOCS.push({ id:'acoes_indice', title:'Relatorio Acoes Coletivas Indice Alerta', category:'relatorio_acoes_indice', content:`RELATÓRIO DAS AÇÕES COLETIVAS – JULHO/2023
 
-[ALERTA DE ATUALIZAÇÃO]
-O relatório de ações coletivas está atualizado em julho/2023. O chatbot pode explicar o histórico, objeto e fase indicada no relatório, mas deve advertir que o andamento atual precisa ser confirmado nos sistemas processuais ou com a assessoria jurídica.
+// =============================================================================
+// SEÇÃO 5 — AÇÕES COLETIVAS
+// =============================================================================
+// Índice geral + detalhes de cada uma das 15 ações coletivas.
+// Atualize o status de cada ação quando houver nova movimentação processual.
+// Para adicionar nova ação: copie o modelo de qualquer acao_XX e altere o id.
+// =============================================================================
 
-[ÍNDICE COMPLETO DAS 15 AÇÕES IDENTIFICADAS]
+DOCS.push({
+  id: 'acoes_indice',
+  title: 'Relatorio Acoes Coletivas Indice Alerta',
+  category: 'relatorio_acoes_indice',
+  content: `RELATÓRIO DAS AÇÕES COLETIVAS – ÍNDICE GERAL
 
-1. Assunto: Adicional de Fronteira | Processo: 1022299-41.2018.4.01.3400 (22ª Vara Cível da SJDF)
-2. Assunto: IN nº 02/2018 – Jornada de Trabalho/Abono de Ponto | Processo: MS Coletivo 1024043-71.2018.4.01.3400 (2ª Vara Cível da SJDF)
-3. Assunto: Danos Materiais GEAP | Processo: 1012481-65.2018.4.01.3400 (21ª Vara Cível da SJDF)
-4. Assunto: Suspensão dos Efeitos da MP 873/2019 | Processo: 1007732-68.2019.4.01.3400 (6ª Vara Cível da SJDF)
-5. Assunto: Auxílio Transporte Coletiva | Processo: 1004692-44.2020.4.01.3400 (6ª Vara Cível da SJDF)
-6. Assunto: Auxílio Transporte (grupo específico de servidores) | Processo: 1009517-65.2019.4.01.3400 (22ª Vara Cível da SJDF)
-7. Assunto: Mandado de Segurança/COVID-19/Serviço Público | Processo: 1015579-87.2020.4.01.3400 (4ª Vara Cível da SJDF)
-8. Assunto: PASEP | Processo: 0727740-19.2020.8.07.0001 (24ª Vara Cível da SJDF)
-9. Assunto: Abono de Permanência | Processo: 1019847-53.2021.4.01.3400 (6ª Vara Cível da SJDF)
-10. Assunto: Paridade | Processo: 1023229-54.2021.4.01.3400/DF (2ª Vara Cível da SJDF)
-11. Assunto: Reposição ao erário | Processo: 1005217-89.2021.4.01.3400/DF (13ª Vara Cível da SJDF)
-12. Assunto: Conversão da licença prêmio não gozada em pecúnia | Processo: 1074276-67.2021.4.01.3400/DF (8ª Vara Cível da SJDF)
-13. Assunto: Inexigibilidade do IRPF sobre valores de auxílio-creche | Processo: 1079393-39.2021.4.01.3400 (5ª Vara Cível da SJDF)
-14. Assunto: Inexigibilidade de quota de participação sobre o auxílio creche | Processo: 1080942-84.2021.4.01.3400/DF (3ª Vara Cível da SJDF)
-15. Assunto: Inconstitucionalidade e inexigibilidade de exação (dobra do teto da contribuição previdenciária) | Processo: 1084980-42.2021.4.01.3400/DF (17ª Vara Cível da SJDF)` });
+⚠️ ALERTA DE ATUALIZAÇÃO: Status baseado em relatório de julho/2023.
+O andamento atual deve ser confirmado nos sistemas processuais ou
+com a assessoria jurídica da UNASLAF.
 
-DOCS.push({ id:'acao_01', title:'Acao 01 Adicional de Fronteira', category:'acoes_coletivas', content:`AÇÃO 1 | Adicional de Fronteira
+ÍNDICE COMPLETO DAS 15 AÇÕES:
+
+1.  Adicional de Fronteira
+    Processo: 1022299-41.2018.4.01.3400 (22ª Vara Cível da SJDF)
+
+2.  IN nº 02/2018 – Jornada de Trabalho/Abono de Ponto
+    Processo: MS Coletivo 1024043-71.2018.4.01.3400 (2ª Vara Cível da SJDF)
+
+3.  Danos Materiais GEAP
+    Processo: 1012481-65.2018.4.01.3400 (21ª Vara Cível da SJDF)
+
+4.  Suspensão dos Efeitos da MP 873/2019
+    Processo: 1007732-68.2019.4.01.3400 (6ª Vara Cível da SJDF)
+
+5.  Auxílio Transporte Coletiva
+    Processo: 1004692-44.2020.4.01.3400 (6ª Vara Cível da SJDF)
+
+6.  Auxílio Transporte (grupo específico de servidores)
+    Processo: 1009517-65.2019.4.01.3400 (22ª Vara Cível da SJDF)
+
+7.  Mandado de Segurança / COVID-19 / Serviço Público
+    Processo: 1015579-87.2020.4.01.3400 (4ª Vara Cível da SJDF)
+    Status: ARQUIVADO DEFINITIVAMENTE
+
+8.  PASEP
+    Processo: 0727740-19.2020.8.07.0001 (24ª Vara Cível da TJDF)
+    Status: IMPROCEDENTE (março/2026)
+
+9.  Abono de Permanência
+    Processo: 1019847-53.2021.4.01.3400 (6ª Vara Cível da SJDF)
+    Status: VITÓRIA EM APELAÇÃO (junho/2023)
+
+10. Paridade
+    Processo: 1023229-54.2021.4.01.3400/DF (2ª Vara Cível da SJDF)
+
+11. Reposição ao Erário
+    Processo: 1005217-89.2021.4.01.3400/DF (13ª Vara Cível da SJDF)
+
+12. Conversão da Licença Prêmio Não Gozada em Pecúnia
+    Processo: 1074276-67.2021.4.01.3400/DF (8ª Vara Cível da SJDF)
+
+13. Inexigibilidade do IRPF sobre Auxílio-Creche
+    Processo: 1079393-39.2021.4.01.3400 (5ª Vara Cível da SJDF)
+    Status: VITÓRIA — Trânsito em julgado 16/05/2022
+
+14. Inexigibilidade de Quota de Participação sobre o Auxílio Creche
+    Processo: 1080942-84.2021.4.01.3400/DF (3ª Vara Cível da SJDF)
+
+15. Inconstitucionalidade da Dobra do Teto da Contribuição Previdenciária
+    Processo: 1084980-42.2021.4.01.3400/DF (17ª Vara Cível da SJDF)`
+});
+
+// ── Ação 1 ───────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_01',
+  title: 'Acao 01 Adicional de Fronteira',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 1 | Adicional de Fronteira
 Processo: 1022299-41.2018.4.01.3400 (22ª Vara Cível da SJDF)
+Escritório: Mota Advogados
 
-OBJETO: Ação Ordinária proposta pela UNASLAF em desfavor da União Federal, com o desiderato de garantir aos servidores integrantes da Carreira do Seguro Social redistribuídos para a Secretaria da Receita Federal do Brasil (RFB) a percepção da indenização a ser concedida ao servidor em exercício nas unidades da RFB, situadas em localidades estratégicas, vinculadas à prevenção, controle, fiscalização e repressão dos delitos transfronteiriços, de que trata a Lei nº 12.855, de 02 de setembro de 2013.
+OBJETO: Garantir aos servidores da Carreira do Seguro Social redistribuídos
+para a RFB a percepção do adicional de fronteira (Lei nº 12.855/2013),
+concedido aos servidores em exercício em localidades estratégicas vinculadas
+à prevenção e repressão de delitos transfronteiriços.
 
-PEDIDOS: i) concessão de tutela de urgência para implementação imediata; ii) condenação da União na obrigação de fazer concernente à implementação definitiva; iii) condenação da União ao pagamento das parcelas vencidas desde a data de publicação do Decreto Regulamentador n. 9.227/2017 (06/12/2017).
+PEDIDOS:
+- Tutela de urgência para implementação imediata
+- Condenação da União ao pagamento das parcelas vencidas desde 06/12/2017
 
 FASE ATUAL (jul/2023):
 - Sentença de improcedência (abril/2020)
-- Embargos de Declaração Não-acolhidos (25/01/2021)
+- Embargos de Declaração não acolhidos (25/01/2021)
 - Recurso de Apelação apresentado (13/07/2021)
-- Juntada de Contrarrazões (21/07/2021)
-- REDISTRIBUÍDO POR SORTEIO EM RAZÃO DE CRIAÇÃO DE UNIDADE JUDICIÁRIA (14/05/2023)
-- Mérito pendente de julgamento no TRF1` });
+- Redistribuído por criação de nova unidade judiciária (14/05/2023)
+- Mérito pendente de julgamento no TRF1
 
-DOCS.push({ id:'acao_02', title:'Acao 02 IN 02 2018 Jornada Trabalho Abono Ponto', category:'acoes_coletivas', content:`AÇÃO 2 | IN nº 02/2018 – Jornada de Trabalho/Abono de Ponto
+STATUS: EM RECURSO (TRF1)`
+});
+
+// ── Ação 2 ───────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_02',
+  title: 'Acao 02 IN 02 2018 Jornada Trabalho Abono Ponto',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 2 | IN nº 02/2018 – Jornada de Trabalho / Abono de Ponto
 Processo: MS Coletivo 1024043-71.2018.4.01.3400 (2ª Vara Cível da SJDF)
+Escritório: Mota Advogados
 
-OBJETO: Mandado de Segurança proposto pela UNASLAF contra ato do Secretário de Gestão de Pessoas do Ministério do Planejamento, Desenvolvimento e Gestão (MPDG), requerendo: i) concessão de liminar para que seja suspenso o artigo 36 da IN n. 02/2018; ii) no mérito, a nulidade do artigo 36 da Instrução Normativa n. 02/2018, possibilitando a dispensa de ponto dos servidores dirigentes filiados/associados à entidade Impetrante, para participação em atividades e eventos promovidos pela UNASLAF sem a necessidade de compensação das horas não trabalhadas, nos termos da Portaria RFB n. 631/2013.
+OBJETO: Mandado de Segurança contra ato do Secretário de Gestão de Pessoas
+do MPDG, requerendo a nulidade do art. 36 da IN nº 02/2018, que impediu a
+dispensa de ponto dos servidores dirigentes filiados à UNASLAF para
+participação em atividades e eventos da entidade.
 
 FASE ATUAL (jul/2023):
 - Liminar indeferida
 - Sentença de improcedência (novembro/2021)
 - Sentença de Embargos negando-lhes provimento (29/11/2022)
-- Recurso de Apelação da entidade interposto (02/02/2023)` });
+- Recurso de Apelação interposto (02/02/2023)
 
-DOCS.push({ id:'acao_03', title:'Acao 03 Danos Materiais GEAP', category:'acoes_coletivas', content:`AÇÃO 3 | Danos Materiais GEAP
-Processo: 1012481-65.2018.4.01.3400 (21ª Vara Cível da SJDF) → redistribuído para TJDFT
+STATUS: EM RECURSO`
+});
 
-OBJETO: Ação proposta pela UNASLAF em desfavor da União Federal e da GEAP – Autogestão em Saúde, na qual questiona a legalidade das Resoluções/GEAP/CAND nº 99/2015, 168/2016 e 269/2017 que alteram a sistemática de contribuições mensais devidas pelos servidores para o financiamento do Plano de Saúde mantido pela referida entidade.
+// ── Ação 3 ───────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_03',
+  title: 'Acao 03 Danos Materiais GEAP',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 3 | Danos Materiais GEAP
+Processo: 1012481-65.2018.4.01.3400 → redistribuído para TJDFT
+Escritório: Mota Advogados
 
-PEDIDOS: i) tutela de urgência para suspender aumentos; ii) condenação das rés na ilegalidade das Resoluções; iii) ressarcimento das diferenças com juros e correção monetária.
+OBJETO: Questiona a legalidade das Resoluções/GEAP/CAND nº 99/2015,
+168/2016 e 269/2017, que alteraram a sistemática de contribuições mensais
+dos servidores para financiamento do Plano de Saúde da GEAP.
+
+PEDIDOS:
+- Suspensão dos aumentos de contribuição
+- Ressarcimento das diferenças com juros e correção monetária
 
 FASE ATUAL (jul/2023):
-- Sentença de improcedência dos pedidos
+- Sentença de improcedência
 - Apelação desprovida (novembro/2021)
 - REsp 1987466/DF admitido (07/02/2022)
-- Processo concluso para decisão ao Ministro HUMBERTO MARTINS (Relator) no STJ` });
+- Processo concluso ao Min. Humberto Martins (Relator) no STJ
 
-DOCS.push({ id:'acao_04', title:'Acao 04 Suspensao Efeitos MP 873 2019', category:'acoes_coletivas', content:`AÇÃO 4 | Suspensão dos Efeitos da MP 873/2019
+STATUS: AGUARDANDO JULGAMENTO NO STJ`
+});
+
+// ── Ação 4 ───────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_04',
+  title: 'Acao 04 Suspensao Efeitos MP 873 2019',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 4 | Suspensão dos Efeitos da MP 873/2019
 Processo: 1007732-68.2019.4.01.3400 (6ª Vara Cível da SJDF)
+Escritório: Mota Advogados | Beneficiários: Diretores UNASLAF
 
-OBJETO: Ação para suspender os efeitos da Medida Provisória 873, de 1º de março de 2019 e do Decreto 9.735 de 22 de março de 2019, determinando-se à demandada que mantenha os descontos/consignações em folha das mensalidades/contribuições associativas solicitadas pela autora.
+OBJETO: Suspender os efeitos da MP 873/2019 e do Decreto 9.735/2019,
+determinando à União que mantenha os descontos em folha das mensalidades
+associativas solicitadas pela UNASLAF.
 
-RESULTADO: Sentença PROCEDENTE (22/04/2020) – União condenada a restabelecer a consignação em pagamento das mensalidades. União interpôs recurso de Apelação.
+RESULTADO: Sentença PROCEDENTE (22/04/2020) — União condenada a restabelecer
+a consignação das mensalidades. União interpôs Apelação.
 
 FASE ATUAL (jul/2023):
-- Remetidos os Autos (em grau de recurso) de 6ª Vara Federal Cível da SJDF para Tribunal (22/10/2020)
-- Aguardando julgamento` });
+- Autos remetidos ao Tribunal (22/10/2020)
+- Aguardando julgamento
 
-DOCS.push({ id:'acao_05', title:'Acao 05 Auxilio Transporte Coletiva', category:'acoes_coletivas', content:`AÇÃO 5 | Auxílio Transporte Coletiva
+STATUS: EM RECURSO`
+});
+
+// ── Ação 5 ───────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_05',
+  title: 'Acao 05 Auxilio Transporte Coletiva',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 5 | Auxílio Transporte Coletiva
 Processo: 1004692-44.2020.4.01.3400 (6ª Vara Cível da SJDF)
+Escritório: Mota Advogados | Beneficiários: Rol de associados
 
-OBJETO: Ação para suspender qualquer ato administrativo que implique exclusão, redução ou suspensão do pagamento do auxílio-transporte na remuneração dos servidores associados à entidade autora. Questiona a IN/SGDP/ME n. 207/2009 do Ministério da Economia.
+OBJETO: Suspender qualquer ato administrativo que implique exclusão, redução
+ou suspensão do auxílio-transporte. Questiona a IN/SGDP/ME nº 207/2019
+do Ministério da Economia.
 
-PEDIDOS: i) declarar inválida a IN/SGDP/ME n. 207/2019; ii) declarar o direito dos associados à percepção do auxílio-transporte independentemente da forma de deslocamento (veículo próprio ou coletivo); iii) restituição dos valores indevidamente suprimidos.
+PEDIDOS:
+- Declarar inválida a IN/SGDP/ME nº 207/2019
+- Garantir o auxílio-transporte independentemente da forma de deslocamento
+- Restituição dos valores indevidamente suprimidos
 
 FASE ATUAL (jul/2023):
 - Sentença de improcedência (02/08/2021)
-- Sentença dos embargos – rejeição (02/03/2022)
-- Recurso de Apelação da UNASLAF interposto (04/04/2022)
-- REDISTRIBUÍDO POR SORTEIO (14/05/2023)` });
+- Embargos rejeitados (02/03/2022)
+- Apelação da UNASLAF interposta (04/04/2022)
+- Redistribuído por sorteio (14/05/2023)
 
-DOCS.push({ id:'acao_06', title:'Acao 06 Auxilio Transporte Grupo Especifico', category:'acoes_coletivas', content:`AÇÃO 6 | Auxílio Transporte (grupo específico de servidores)
+STATUS: EM RECURSO`
+});
+
+// ── Ação 6 ───────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_06',
+  title: 'Acao 06 Auxilio Transporte Grupo Especifico',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 6 | Auxílio Transporte — Grupo Específico de Servidores
 Processo: 1009517-65.2019.4.01.3400 (22ª Vara Cível da SJDF)
+Escritório: Mota Advogados
 
-OBJETO: Ação para suspender qualquer ato administrativo que implique a exclusão, redução ou suspensão do pagamento do auxílio transporte na remuneração dos servidores listados na petição inicial.
+OBJETO: Suspender atos que impliquem exclusão ou redução do auxílio-transporte
+para um grupo específico de servidores listados na petição inicial.
 
-RESULTADO: Sentença PROCEDENTE (12/03/2020) – reconheceu o direito dos substituídos à percepção da vantagem "auxílio-transporte" sem a incidência de descontos remuneratórios, ainda que a despesa decorra de gastos efetuados em deslocamento usando meio próprio de transporte.
+RESULTADO: Sentença PROCEDENTE (12/03/2020) — reconheceu o direito dos
+substituídos ao auxílio-transporte sem descontos, mesmo usando transporte próprio.
 
 FASE ATUAL (jul/2023):
-- Sentença dos Embargos da União – rejeição (05/03/2021)
-- Recurso de Apelação da União interposto (17/03/2021)
-- Redistribuído por dependência ao processo 1016077-38.2019.4.01.0000 (Desembargadora Federal MARIA MAURA MARTINS MORAES TAYER)
-- Autos conclusos para decisão (07/02/2022)` });
+- Embargos da União rejeitados (05/03/2021)
+- Apelação da União interposta (17/03/2021)
+- Redistribuído por dependência ao processo 1016077-38.2019.4.01.0000
+- Autos conclusos para decisão (07/02/2022)
 
-DOCS.push({ id:'acao_07', title:'Acao 07 Mandado Seguranca COVID 19 Servico Publico', category:'acoes_coletivas', content:`AÇÃO 7 | Mandado de Segurança/COVID-19/Serviço Público
+STATUS: EM RECURSO — AGUARDANDO JULGAMENTO DA APELAÇÃO DA UNIÃO`
+});
+
+// ── Ação 7 ───────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_07',
+  title: 'Acao 07 Mandado Seguranca COVID 19 Servico Publico',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 7 | Mandado de Segurança / COVID-19 / Serviço Público
 Processo: 1015579-87.2020.4.01.3400 (4ª Vara Cível da SJDF)
+Escritório: Mota Advogados | Beneficiários: Rol de associados
 
-OBJETO: Mandado de Segurança preventivo coletivo, impetrado pela UNASLAF, requerendo o reconhecimento do direito líquido e certo para que a autoridade impetrada suspenda os atendimentos presenciais abertos ao público pelo período mínimo de 15 dias nos Centros de Atendimento ao Contribuinte (CAC), bem como nas Agências da Receita Federal do Brasil, durante a pandemia de COVID-19.
+OBJETO: MS preventivo coletivo para suspender atendimentos presenciais
+nos CAC e Agências da Receita Federal durante a pandemia de COVID-19,
+pelo período mínimo de 15 dias.
 
-FASE ATUAL:
+RESULTADO:
 - Liminar deferida inicialmente
 - Segurança denegada (outubro/2020)
-- Embargos de Declaração Não-acolhidos (14/09/2021)
+- Embargos não acolhidos (14/09/2021)
 - ARQUIVADO DEFINITIVAMENTE (19/10/2021)
 
-STATUS: ARQUIVADO` });
+STATUS: ✗ ARQUIVADO DEFINITIVAMENTE`
+});
 
-DOCS.push({ id:'acao_08', title:'Acao 08 PASEP', category:'acoes_coletivas', content:`AÇÃO 8 | PASEP
-Processo: 0727740-19.2020.8.07.0001 (24ª Vara Cível da SJDF)
+// ── Ação 8 ───────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_08',
+  title: 'Acao 08 PASEP',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 8 | PASEP
+Processo: 0727740-19.2020.8.07.0001 (24ª Vara Cível do TJDF)
+Escritório: Mota Advogados | Beneficiários: Lista específica
 
-OBJETO: Ação de conhecimento da entidade em desfavor do Banco do Brasil para pleitear as diferenças a título de PASEP. Com a superveniência da aposentadoria dos servidores associados, surgiu o direito ao recebimento dos valores depositados nos programas PIS/PASEP, porém o valor disponibilizado está muito aquém do que resultaria tantos anos de rendimentos e atualização monetária.
+OBJETO: Ação contra o Banco do Brasil pleiteando diferenças a título de PASEP.
+Com a aposentadoria dos servidores, surgiu o direito ao recebimento dos valores
+depositados no PIS/PASEP, porém o valor disponibilizado está muito aquém do
+que resultaria de tantos anos de rendimentos e atualização monetária.
 
-PEDIDOS: Condenação do Banco do Brasil a pagar os valores devidamente atualizados da conta PASEP dos associados da entidade autora, em conformidade com a LC nº 08/1970; Decreto nº 4.751/2003; Lei nº 9.365/1996.
+PEDIDOS: Condenação do Banco do Brasil a pagar os valores devidos em
+conformidade com a LC nº 08/1970, Decreto nº 4.751/2003 e Lei nº 9.365/1996.
 
 FASE ATUAL (jul/2023):
-- Processo SUSPENSO por Decisão do Presidente do STJ em razão da SIRDR número 9
-- Aguarda trânsito em julgado da decisão a ser proferida em qualquer dos IRDRs 0720138-77/TJDFT, 0010218-16/TJTO, 0812604-05/TJPB ou 0756585-58/TJPI
+- Processo suspenso por decisão do Presidente do STJ (SIRDR nº 9)
+- Aguardava trânsito em julgado de IRDRs relacionados
 
 NOTA ATUALIZADA (março/2026): Ação julgada IMPROCEDENTE.
 
-STATUS: SUSPENSO/IMPROCEDENTE` });
+STATUS: ✗ IMPROCEDENTE`
+});
 
-DOCS.push({ id:'acao_09', title:'Acao 09 Abono de Permanencia', category:'acoes_coletivas', content:`AÇÃO 9 | Abono de Permanência
+// ── Ação 9 ───────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_09',
+  title: 'Acao 09 Abono de Permanencia',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 9 | Abono de Permanência
 Processo: 1019847-53.2021.4.01.3400 (6ª Vara Cível da SJDF)
+Escritório: Mota Advogados | Beneficiários: Rol de associados
 
-OBJETO: Ação de conhecimento que pretende a condenação da União no pagamento das diferenças remuneratórias decorrentes do direito dos servidores públicos federais associados da Autora à inclusão do Abono de Permanência na base de cálculo do adicional de um Terço de Férias e da Gratificação Natalina (13º).
+OBJETO: Condenação da União ao pagamento das diferenças decorrentes da
+inclusão do Abono de Permanência na base de cálculo do Adicional de ⅓
+de Férias e da Gratificação Natalina (13º salário).
 
-RESULTADO: Sentença PROCEDENTE (08/04/2022) – Reconheceu a natureza remuneratória do abono de permanência e determinou sua inclusão na base de cálculo do terço constitucional de férias e da gratificação natalina.
+RESULTADO 1ª INSTÂNCIA: Sentença PROCEDENTE (08/04/2022) — reconheceu
+a natureza remuneratória do abono de permanência e determinou sua inclusão
+na base de cálculo do terço constitucional de férias e do 13º.
 
-RESULTADO DO RECURSO (junho/2023): Apelação – Sentença reformada em parte. Honorários devem incidir sobre o valor da condenação.
-
-- STF (Tema 1.075): impossibilidade de restrição dos efeitos da sentença aos limites de competência territorial.
-- STJ (Tema 424): abono de permanência possui natureza remuneratória.
-- Apelação da União: NÃO PROVIDA
+RESULTADO EM RECURSO (junho/2023):
 - Apelação da UNASLAF: PROVIDA (base de cálculo dos honorários)
+- Apelação da União: NÃO PROVIDA
+- STJ (Tema 424): abono de permanência tem natureza remuneratória ✓
+- STF (Tema 1.075): impossibilidade de restrição territorial dos efeitos ✓
 
-STATUS: VITÓRIA EM APELAÇÃO (junho/2023)` });
+STATUS: ✓ VITÓRIA EM APELAÇÃO (junho/2023)`
+});
 
-DOCS.push({ id:'acao_10', title:'Acao 10 Paridade', category:'acoes_coletivas', content:`AÇÃO 10 | Paridade
+// ── Ação 10 ──────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_10',
+  title: 'Acao 10 Paridade',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 10 | Paridade
 Processo: 1023229-54.2021.4.01.3400/DF (2ª Vara Cível da SJDF)
+Escritório: Mota Advogados | Beneficiários: Rol de associados
 
-OBJETO: Ação de conhecimento objetivando a condenação da União a proceder a REVISÃO de aposentadorias e pensões dos servidores públicos federais representados/substituídos pela AUTORA, a fim de assegurar-lhes o pagamento de todas as diferenças de proventos e pensões decorrentes da aplicação do instituto da paridade nos mesmos índices, vantagens, benefícios, inclusive os decorrentes de reenquadramento, reclassificação, redenominação ou reorganização das carreiras e cargos públicos, da mesma e igual forma e valores atribuídos aos servidores ativos.
+OBJETO: Condenação da União a revisar aposentadorias e pensões, assegurando
+o pagamento de todas as diferenças decorrentes da aplicação da paridade —
+nos mesmos índices, vantagens e benefícios atribuídos aos servidores ativos,
+inclusive os decorrentes de reenquadramento, reclassificação ou reorganização
+de carreiras e cargos públicos.
 
 FASE ATUAL (jul/2023):
 - União contestou a ação (03/08/2022)
 - Réplica apresentada pela UNASLAF (08/03/2023)
-- Aguardando julgamento` });
+- Aguardando julgamento
 
-DOCS.push({ id:'acao_11', title:'Acao 11 Reposicao ao Erario', category:'acoes_coletivas', content:`AÇÃO 11 | Reposição ao Erário
-Processos: 1005217-89.2021.4.01.3400/DF (13ª Vara Cível da SJDF) e 5024330-86.2020.4.03.6100 (17ª Vara Federal de São Paulo)
+STATUS: AGUARDANDO JULGAMENTO`
+});
 
-OBJETO: Ação de conhecimento que pretende a condenação da União nos seguintes pedidos: a) deferimento da tutela de urgência para suspensão de quaisquer pagamentos a título de reposição ao erário dos valores objeto da Reclamação Trabalhista nº 0138200-51.1992.5.02.0044 – rubrica RT 1382/92 – rescindida pela ação nº 1121900-59.1997.5.02.0000, exigidos dos associados ora representados.
+// ── Ação 11 ──────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_11',
+  title: 'Acao 11 Reposicao ao Erario',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 11 | Reposição ao Erário
+Processos: 1005217-89.2021.4.01.3400/DF (13ª Vara Cível da SJDF)
+           5024330-86.2020.4.03.6100 (17ª Vara Federal de São Paulo)
+Escritório: Mota Advogados | Beneficiários: Lista específica
+
+OBJETO: Suspender cobranças a título de reposição ao erário dos valores
+objeto da Reclamação Trabalhista nº 0138200-51.1992.5.02.0044
+(rubrica RT 1382/92), rescindida pela ação nº 1121900-59.1997.5.02.0000.
 
 FASE ATUAL (jul/2023):
-- Processo foi redistribuído para São Paulo (5007253-93.2022.4.03.6100/SP)
-- Entidade interpôs Agravo de Instrumento (AI 5014983-25.2022.4.03.0000/SP)
-- O juízo aguarda o julgamento do Agravo de Instrumento para prosseguir no julgamento da ação
+- Processo redistribuído para São Paulo (5007253-93.2022.4.03.6100/SP)
+- Agravo de Instrumento interposto (AI 5014983-25.2022.4.03.0000/SP)
+- Juízo aguarda julgamento do AI para prosseguir
 - Contraminuta juntada em 19/09/2022
-- Recurso aguarda análise do pedido de efeito suspensivo` });
 
-DOCS.push({ id:'acao_12', title:'Acao 12 Conversao Licenca Premio Nao Gozada em Pecunia', category:'acoes_coletivas', content:`AÇÃO 12 | Conversão da Licença Prêmio Não Gozada em Pecúnia
+STATUS: AGUARDANDO JULGAMENTO DO AGRAVO DE INSTRUMENTO`
+});
+
+// ── Ação 12 ──────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_12',
+  title: 'Acao 12 Conversao Licenca Premio Nao Gozada em Pecunia',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 12 | Conversão da Licença Prêmio Não Gozada em Pecúnia
 Processo: 1074276-67.2021.4.01.3400/DF (8ª Vara Cível da SJDF)
+Escritório: Mota Advogados | Beneficiários: Rol de associados
 
-OBJETO: Ação de conhecimento que pretende a condenação da União nos seguintes pedidos: a) reconhecimento do direito dos filiados à entidade autora de converter em pecúnia os períodos de licença-prêmio e/ou licença especial, conquistados e não gozados, no momento de sua aposentadoria ou durante o seu gozo; b) condenação da União no pagamento dos valores devidos; c) determinação da não incidência do Imposto de Renda da Pessoa Física (IRPF) sobre o valor indenizado (Súmula 136/STJ).
+OBJETO: Reconhecimento do direito dos filiados de converter em pecúnia os
+períodos de licença-prêmio e/ou licença especial não gozados, no momento
+da aposentadoria ou durante o seu gozo. Inclui pedido de não incidência
+de IRPF sobre o valor indenizado (Súmula 136/STJ).
 
 FASE ATUAL (jul/2023):
-- Juízo indeferiu o pedido formulado pela entidade e determinou a emenda
-- Prazo fatal para emenda: 19/07/2023` });
+- Juízo indeferiu o pedido formulado e determinou emenda da petição
+- Prazo fatal para emenda: 19/07/2023
 
-DOCS.push({ id:'acao_13', title:'Acao 13 Inexigibilidade IRPF Auxilio Creche', category:'acoes_coletivas', content:`AÇÃO 13 | Inexigibilidade do IRPF sobre os Valores de Auxílio-Creche
+STATUS: AGUARDANDO EMENDA / JULGAMENTO`
+});
+
+// ── Ação 13 ──────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_13',
+  title: 'Acao 13 Inexigibilidade IRPF Auxilio Creche',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 13 | Inexigibilidade do IRPF sobre os Valores de Auxílio-Creche
 Processo: 1079393-39.2021.4.01.3400 (5ª Vara Cível da SJDF)
+Escritório: Mota Advogados | Beneficiários: Rol de associados
 
-OBJETO: Ação de conhecimento que pretende: a) a declaração da inexigibilidade do Imposto de Renda da Pessoa Física (IRPF) sobre os valores recebidos pelos filiados da autora a título de auxílio-creche e assistência pré-escolar; b) condenação da União a restituir os valores já cobrados a esse título nos últimos cinco anos, com juros e correção monetária pela TAXA SELIC.
+OBJETO: Declaração de inexigibilidade do IRPF sobre os valores recebidos
+a título de auxílio-creche e assistência pré-escolar, e condenação da União
+a restituir os valores cobrados nos últimos 5 anos (com SELIC).
 
-RESULTADO: Sentença PROCEDENTE (17/03/2022) – Declarou a não-incidência do imposto de renda sobre o auxílio-creche pago aos representados. União não recorreu.
-
+RESULTADO: Sentença PROCEDENTE (17/03/2022) — declarou a não-incidência
+do imposto de renda sobre o auxílio-creche. União NÃO recorreu.
 TRÂNSITO EM JULGADO: 16/05/2022
-STATUS: VITÓRIA — AGUARDANDO INÍCIO DO CUMPRIMENTO DE SENTENÇA` });
 
-DOCS.push({ id:'acao_14', title:'Acao 14 Inexigibilidade Quota Participacao Auxilio Creche', category:'acoes_coletivas', content:`AÇÃO 14 | Inexigibilidade de Quota de Participação sobre o Auxílio Creche
+STATUS: ✓ VITÓRIA — AGUARDANDO INÍCIO DO CUMPRIMENTO DE SENTENÇA`
+});
+
+// ── Ação 14 ──────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_14',
+  title: 'Acao 14 Inexigibilidade Quota Participacao Auxilio Creche',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 14 | Inexigibilidade de Quota de Participação sobre o Auxílio Creche
 Processo: 1080942-84.2021.4.01.3400/DF (3ª Vara Cível da SJDF)
+Escritório: Mota Advogados | Beneficiários: Rol de associados
 
-OBJETO: Ação de conhecimento que pretende: 1) declarar a inexigibilidade de quota de participação dos associados da entidade autora sobre o custeio do auxílio pré-escolar e/ou creche mensalmente recebido; 2) determinar à União que retire do contracheque dos substituídos a consignação do débito da quota parte; 3) condenar a União a pagar os valores descontados, excluídas as parcelas prescritas, com correção monetária e juros.
+OBJETO: Declarar a inexigibilidade de quota de participação dos associados
+sobre o custeio do auxílio pré-escolar/creche mensalmente recebido, e
+determinar à União que retire do contracheque o desconto da quota-parte,
+com restituição dos valores descontados.
 
 FASE ATUAL (jul/2023):
-- Tutela urgência indeferida (24/01/2023)
-- Aguarda intimação da decisão e a ordem de citação da União` });
+- Tutela de urgência indeferida (24/01/2023)
+- Com Agravo de Instrumento 1036859-27.2023.4.01.0000
+- Aguarda intimação e citação da União
 
-DOCS.push({ id:'acao_15', title:'Acao 15 Inconstitucionalidade Dobra Teto Contribuicao', category:'acoes_coletivas', content:`AÇÃO 15 | Inconstitucionalidade e Inexigibilidade de Exação (Dobra do Teto da Contribuição Previdenciária)
+STATUS: AGUARDANDO JULGAMENTO`
+});
+
+// ── Ação 15 ──────────────────────────────────────────────────────────────────
+DOCS.push({
+  id: 'acao_15',
+  title: 'Acao 15 Inconstitucionalidade Dobra Teto Contribuicao',
+  category: 'acoes_coletivas',
+  content: `AÇÃO 15 | Inconstitucionalidade da Dobra do Teto da Contribuição Previdenciária
 Processo: 1084980-42.2021.4.01.3400/DF (17ª Vara Cível da SJDF)
+Escritório: Mota Advogados | Beneficiários: Rol de associados
 
-OBJETO: Mandado de Segurança para: a) declarar a inconstitucionalidade da exação pretendida pela Administração Pública Federal que desconsidera a isenção da dobra do teto da contribuição, proventos e pensões dos servidores ora substituídos e seus pensionistas, sem a observância do período nonagesimal; b) determinar que a autoridade impetrada suspenda imediatamente a cobrança dos valores pretendidos a título de contribuição social para o RPPS em desrespeito ao princípio constitucional da anterioridade nonagesimal (§21, art. 40 da CF, introduzido pela EC nº 103/2019).
+OBJETO: Mandado de Segurança para declarar a inconstitucionalidade da exação
+que desconsidera a isenção da dobra do teto da contribuição previdenciária,
+em desrespeito ao princípio constitucional da anterioridade nonagesimal
+(§21, art. 40 da CF, introduzido pela EC nº 103/2019).
 
 FASE ATUAL (jul/2023):
-- Entidade confirmou persistência do interesse no processamento (15/03/2023)
-- Aguarda citação da União` });
+- Entidade confirmou persistência do interesse (15/03/2023)
+- Aguarda citação da União
 
-export { DOCS };
+STATUS: AGUARDANDO CITAÇÃO / JULGAMENTO`
+});
 
-DOCS.push({ id:'lista_28_pt1', title:'Lista Associados Acao 28 Parte 01', category:'lista_associados_acao_28', content:`LISTA DE ASSOCIADOS – AÇÃO 28% – BASE SANITIZADA
 
-[USO PARA CHATBOT]
-Lista de referência nominal para consulta interna da ação dos 28%.
-Campos mantidos: número, nome, estado civil e CPF.
-A IA não deve exibir a lista completa ao usuário final. Deve consultar apenas por CPF/nome informado em atendimento autenticado.
+// =============================================================================
+// SEÇÃO 6 — TABELA COMPLETA DE PROCESSOS (TODOS OS ESCRITÓRIOS)
+// =============================================================================
+// Lista todos os 38 processos da UNASLAF, por escritório.
+// Atualizada em maio/2026. Edite aqui quando houver novos processos ou
+// quando o status de um processo mudar.
+// =============================================================================
+
+DOCS.push({
+  id: 'processos_completo',
+  title: 'Tabela Completa de Processos UNASLAF',
+  category: 'processos_acoes',
+  content: `TABELA COMPLETA DE PROCESSOS – UNASLAF
+Atualizado: Maio/2026 | Total: 38 processos/ações
+
+=== EQUIPE INTERNA ===
+ADI 4151 | STF | Em andamento | Todos os associados
+
+=== MOTA ADVOGADOS ===
+0727740-19.2020.8.07.0001 | TJDF 24ª Vara | 31/08/2020 | IMPROCEDENTE (mar/2026) | PASEP | Lista específica
+1004692-44.2020.4.01.3400 | JFDF 6ª Vara | 29/01/2020 | Em andamento | Auxílio Transporte Coletiva | Rol de associados
+1015579-87.2020.4.01.3400 | JFDF 4ª Vara | 19/03/2020 | ARQUIVADO DEFINITIVAMENTE | MS/COVID-19 | Rol de associados
+1019847-53.2021.4.01.3400 | JFDF 6ª Vara | 08/04/2021 | VITÓRIA EM APELAÇÃO | Abono de Permanência | Rol de associados
+1023229-54.2021.4.01.3400 | JFDF 2ª Vara | 26/04/2021 | Em andamento | Paridade | Rol de associados
+1074276-67.2021.4.01.3400 | JFDF 8ª Vara | 19/10/2021 | Em andamento | Licença Prêmio em Pecúnia | Rol de associados
+1079393-39.2021.4.01.3400 | JFDF 5ª Vara | 09/11/2021 | VITÓRIA — TJ 16/05/2022 | IR sobre Auxílio-Creche | Rol de associados
+1080942-84.2021.4.01.3400 | JFDF 3ª Vara | 16/11/2021 | AI 1036859-27.2023 | Quota Participação Auxílio Creche | Rol de associados
+1084980-42.2021.4.01.3400 | JFDF 17ª Vara | 01/12/2021 | Em andamento | Dobra do Teto Contribuição | Rol de associados
+5024330-86.2020.4.03.6100 | JFSP 17ª Vara | - | Em andamento | Reposição ao Erário | Lista específica
+0061254-90.1997.4.03.6100 | JFSP 4ª Vara | - | Em andamento | Reajuste 28,86% (Lei 8.627/93) | Lista específica
+970025637-5 | JFRS 6ª Vara | - | ARQUIVADO | 28,86% | Lista específica
+0031048-60.2001.4.01.3400 | JFDF 15ª Vara | - | ARQUIVADO | 28,86% | Lista específica
+38782-33.1999.4.01.34.00 | JFSP 4ª Vara | - | ARQUIVADO | 28,86% | Lista específica
+8426-69.2010.4.01.3400 | JFDF | - | Em andamento | Averbação/Cômputo Tempo Especial | -
+1022299-41.2018.4.01.3400 | JFDF 22ª Vara | - | Em andamento | Adicional de Fronteira | -
+1024043-71.2018.4.01.3400 | JFDF 2ª Vara | - | Em andamento | IN 02/2018 Jornada/Abono Ponto | -
+0727196-31.2020.8.07.0001 | JFDF 21ª Vara | - | Em andamento | Danos Materiais GEAP | Rol de associados
+1007732-68.2019.4.01.3400 | JFDF 6ª Vara | - | Em andamento | MP 873/2019 | Diretores UNASLAF
+1009517-65.2019.4.01.3400 | JFDF 22ª Vara | - | Em andamento | Auxílio Transporte Grupo Específico | -
+2005.71.00.020255-3 | JFRS | - | Em andamento | Execução Sentença 97.00.023625-0/RS | Lucia Trindade de Souza, Nair Rost de Borba, Ines Irene Brugnera Castelli (excluída)
+5002118-66.2011.4.04.7100 | JFRS | - | Em andamento | Execução Sentença 97.00.023625-0/RS | Amadeu Fabre Neto (excluído), Célia Arndt Gomes, Celso Scheffer Salles, Domingos Adão Davila, José Luis Dellagnere Fenoy, Leni Amir Perone (excluída), Maria Alice Nicolini, Maria Dora Ferreira Medeiros, Maria Isabel Radaelli Duarte, Maria Thereza Correa da Silva, Nair Rost de Borba
+5002121-21.2011.4.04.7100 | JFRS | - | ARQUIVADO | Embargos de Execução | -
+5005264-18.2011.4.04.7100 | JFRS | - | ARQUIVADO | Embargos de Execução | -
+5053568-38.2017.4.04.7100 | JFRS | - | Em andamento | Execução Sentença 97.00.023625-0/RS | Doris Silva Veiga, Eni Terezinha Barbosa de Araújo, Iara Beatriz dos Santos Correa, Ivani Baptista dos Santos, Maria de Fátima Gatto Tosin, Osmar Nunes de Freitas (excluído), Rosaura Maria Silveira Vieira, Rute Pacheco Borges
+
+=== RAPHAEL MALINVERNI ===
+0055884-14.2012.4.01.3400 | JFDF 1ª Vara | 13/11/2012 | Em andamento | Transformação Cargo Analista Tributário | Lista específica
+0005911-80.2018.4.01.3400 | JFDF 7ª Vara | - | Em andamento | Execução Provisória 1 — Nomenclatura | Lista específica
+0012872-86.2008.4.01.3400 | JFDF 7ª Vara | 22/04/2008 | Em andamento | Correção Nomenclatura | Lista específica
+0020259-84.2010.4.01.3400 | JFDF 22ª Vara | 27/04/2010 | Em andamento | Descontos INSS sobre Terço de Férias | -
+0038104-37.2007.4.01.3400 | JFDF 16ª Vara | 29/10/2007 | ARQUIVADO | Suspensão Prazo Retorno INSS | -
+1018458-28.2024.4.01.3400 | JFDF 7ª Vara | 21/03/2024 | Em andamento | Execução Provisória 2 — Nomenclatura | Lista específica
+0036028-35.2010.4.01.3400 | JFDF 9ª Vara | - | Em andamento | Exclusão do PECFAZ | -
+1098257-23.2024.4.01.3400 | JFDF 7ª Vara | 03/12/2024 | Em andamento | Segunda Correção Nomenclatura | Lista específica
+0031897-85.2008.4.01.3400 | - | - | Em andamento | Suspensão Art. 256-A PECFAZ | -
+1014667-95.2026.4.01.0000 | TRF1 | 20/04/2026 | Em andamento | Agravo de Instrumento — MS 1021420-53.2026 — Portaria DGP/SSC/MGI 1.985/2026 | Lista específica: ALDO ROEDEL 309.039.719-68; EDUARDO ROBERTO TORRIERI 206.956.248-49; GLAUCIA DA SILVA CORLAITE 046.427.396-02; JOÃO ALVES DO SANTOS 721.929.338-00; JULIA MARIA THEREZA MURBACK 067.768.948-92; MARIANA THEREZA MURBACK 431.217.398-24; MARCIA MACHADO DE FREITAS 382.441.876-20; MARIA CRISTINA DE CARVALHO 004.823.298-07; MARILDA ANTONIA DE FREITAS PERUSSO 056.460.788-65; MILCIO DE FREITAS BAHIA 296.272.147-87; NEUSA BEATRIZ NOGUEIRA 480.454.460-72; REGINA PEREIRA DE FREITAS KLEIN 607.779.829-00; SUELI MOREIRA PINTO 066.123.708-74
+1021420-53.2026.4.01.3400 | JFDF 18ª Vara Federal | 04/03/2026 | Em andamento | Mandado de Segurança — Portaria DGP/SSC/MGI 1.985/2026 | Lista específica: ALDO ROEDEL 309.039.719-68; EDUARDO ROBERTO TORRIERI 206.956.248-49; GLAUCIA DA SILVA CORLAITE 046.427.396-02; JOÃO ALVES DO SANTOS 721.929.338-00; JULIA MARIA THEREZA MURBACK 067.768.948-92; MARIANA THEREZA MURBACK 431.217.398-24; MARCIA MACHADO DE FREITAS 382.441.876-20; MARIA CRISTINA DE CARVALHO 004.823.298-07; MARILDA ANTONIA DE FREITAS PERUSSO 056.460.788-65; MILCIO DE FREITAS BAHIA 296.272.147-87; NEUSA BEATRIZ NOGUEIRA 480.454.460-72; REGINA PEREIRA DE FREITAS KLEIN 607.779.829-00; SUELI MOREIRA PINTO 066.123.708-74`
+});
+
+
+// =============================================================================
+// SEÇÃO 7 — LISTAS DE ASSOCIADOS (USO INTERNO — NÃO DIVULGAR)
+// =============================================================================
+// Listas para verificação individual por CPF ou nome em atendimento autenticado.
+// A IA NÃO deve exibir estas listas completas ao usuário final.
+// =============================================================================
+
+DOCS.push({
+  id: 'lista_28_pt1',
+  title: 'Lista Associados Acao 28 Parte 01',
+  category: 'lista_associados_acao_28',
+  content: `LISTA DE ASSOCIADOS – AÇÃO 28% – BASE SANITIZADA
+
+⚠️ USO INTERNO: Consultar apenas por CPF/nome em atendimento autenticado.
+A IA não deve exibir esta lista completa ao usuário final.
 
 PARTE 1 (registros 1 a 370):
 1;ADAÍS RIBEIRO PEIXOTO;viúva;678.861.248-04
@@ -551,13 +892,17 @@ PARTE 1 (registros 1 a 370):
 48;CECÍLIA REEKO TAMASHIRO ARAKEKI;casada;782.297.158-15
 49;CÉLIA APARECIDA ANDRETA DA COSTA;solteira;069.643.248-01
 50;CELIA REGINA ZAIA BONETO;casada;075.855.818-07
-[Lista completa disponível para consulta interna por CPF/nome mediante autenticação]` });
+[Lista completa disponível para consulta interna por CPF/nome mediante autenticação]`
+});
 
-DOCS.push({ id:'lista_28_pt2', title:'Lista Associados Acao 28 Parte 02', category:'lista_associados_acao_28', content:`LISTA DE ASSOCIADOS – AÇÃO 28% – BASE SANITIZADA (PARTE 2)
+DOCS.push({
+  id: 'lista_28_pt2',
+  title: 'Lista Associados Acao 28 Parte 02',
+  category: 'lista_associados_acao_28',
+  content: `LISTA DE ASSOCIADOS – AÇÃO 28% – BASE SANITIZADA (PARTE 2)
 
-[USO PARA CHATBOT]
-Continuação da lista de referência nominal para consulta interna da ação dos 28%.
-A IA não deve exibir a lista completa ao usuário final. Deve consultar apenas por CPF/nome informado em atendimento autenticado.
+⚠️ USO INTERNO: Consultar apenas por CPF/nome em atendimento autenticado.
+A IA não deve exibir esta lista completa ao usuário final.
 
 PARTE 2 (registros 371 a 487):
 371;PAULO ANTONIO BUENO;casado;072.972.628-20
@@ -621,57 +966,17 @@ PARTE 2 (registros 371 a 487):
 429;WALDINA LÚCIA DO NASCIMENTO CAYRES;casada;120.190.418-80
 430;WATFA CHAMEL ELIAS;solteira;068.646.648-99
 431;YARA TRABALLI BOZZI;solteira;338.442.597-91
-432;ZELITA GONÇALVES DE OLIVEIRA PINELLI;casada;768.000.598-20` });
+432;ZELITA GONÇALVES DE OLIVEIRA PINELLI;casada;768.000.598-20`
+});
 
-DOCS.push({ id:'processos_completo', title:'Tabela Completa de Processos UNASLAF', category:'processos_acoes', content:`TABELA COMPLETA DE PROCESSOS – UNASLAF
-Atualizado: Maio/2026
 
-ESCRITÓRIO | PROCESSO | FORO | DATA DISTRIB. | SITUAÇÃO | ASSUNTO | BENEFICIÁRIOS
+// =============================================================================
+// FIM DO ARQUIVO
+// Para adicionar novo documento, insira acima desta linha:
+// DOCS.push({ id:'novo_id', title:'Título', category:'categoria', content:`conteúdo` });
+// =============================================================================
 
-=== ESCRITÓRIO: EQUIPE INTERNA ===
-ADI 4151 | STF | - | - | Em andamento | ADI 4151 | Todos os associados
-
-=== ESCRITÓRIO: MOTA ADVOGADOS ===
-0727740-19.2020.8.07.0001 | TJDF - 24ª Vara Cível | 31/08/2020 | - | PASEP | Lista específica
-1004692-44.2020.4.01.3400 | JFDF - 6ª Vara Cível | 29/01/2020 | - | Auxílio Transporte Coletiva | Rol de associados
-1015579-87.2020.4.01.3400 | JFDF - 4ª Vara Cível | 19/03/2020 | Arquivado Definitivamente | Mandado de Segurança/COVID-19/Serviço Público | Rol de associados
-1019847-53.2021.4.01.3400 | JFDF - 6ª Vara Cível | 08/04/2021 | - | Abono de Permanência | Rol de associados
-1023229-54.2021.4.01.3400 | JFDF - 2ª Vara Cível | 26/04/2021 | - | Paridade | Rol de associados
-1074276-67.2021.4.01.3400 | JFDF - 8ª Vara Cível | 19/10/2021 | - | Conversão da licença prêmio não gozada em pecúnia | Rol de associados
-1079393-39.2021.4.01.3400 | JFDF - 5ª Vara Cível | 09/11/2021 | Arquivado (aguardando execução) | Inexigibilidade do IR sobre auxílio-creche e assistência pré-escolar | Rol de associados
-1080942-84.2021.4.01.3400 | JFDF - 3ª Vara Cível | 16/11/2021 | Com Agravo de Instrumento 1036859-27.2023.4.01.0000 | Inexigibilidade de quota de participação sobre o auxílio creche | Rol de associados
-1084980-42.2021.4.01.3400 | JFDF - 17ª Vara Cível | 01/12/2021 | - | Inconstitucionalidade e inexigibilidade de exação (dobra do teto do RGPS) | Rol de associados
-5024330-86.2020.4.03.6100 | JFSP - 17ª Vara Cível | - | - | Reposição ao erário | Lista específica
-0061254-90.1997.4.03.6100 | JFSP - 4ª Vara Cível | - | - | Reajuste dos 28,86% concedido aos militares pela Lei 8.627/93 | Lista específica
-970025637-5 | JFRS - 6ª Vara | - | Arquivado | 28,86% | Lista específica
-0031048-60.2001.4.01.3400 | JFDF - 15ª Vara Cível | - | Arquivado | 28,86% | Lista específica
-38782-33.1999.4.01.34.00 | JFSP - 4ª Vara Cível | - | Arquivado | 28,86% | Lista específica
-8426-69.2010.4.01.3400 | JFDF | - | - | Averbação/Cômputo/Conversão de tempo de serviço especial | -
-1022299-41.2018.4.01.3400 | JFDF - 22ª Vara Cível | - | - | Adicional de Fronteira | -
-1024043-71.2018.4.01.3400 | JFDF - 2ª Vara Cível | - | - | IN nº 02/2018 – Jornada de Trabalho/Abono de Ponto | -
-0727196-31.2020.8.07.0001 | JFDF - 21ª Vara Cível | - | - | Danos Materiais GEAP | Rol de associados
-1007732-68.2019.4.01.3400 | JFDF - 6ª Vara Cível | - | - | Suspensão dos Efeitos da MP 873/2019 | Diretores UNASLAF
-1009517-65.2019.4.01.3400 | JFDF - 22ª Vara Cível | - | - | Auxílio Transporte (grupo específico de servidores) | -
-2005.71.00.020255-3 | JFRS | - | - | Execução de sentença - Ação Principal nº 97.00.023625-0/RS | Lucia Trindade de Souza, Nair Rost de Borba, Ines Irene Brugnera Castelli (excluída – litispendência)
-5002118-66.2011.4.04.7100 | JFRS | - | - | Execução de sentença - Ação Principal nº 97.00.023625-0/RS | Amadeu Fabre Neto (excluído), Célia Arndt Gomes, Celso Scheffer Salles, Domingos Adão Davila, José Luis Dellagnere Fenoy, Leni Amir Perone (excluída), Maria Alice Nicolini, Maria Dora Ferreira Medeiros, Maria Isabel Radaelli Duarte, Maria Thereza Correa da Silva, Nair Rost de Borba
-5002121-21.2011.4.04.7100 | JFRS | - | Arquivado | Embargos de execução | -
-5005264-18.2011.4.04.7100 | JFRS | - | Arquivado | Embargos de execução | -
-5053568-38.2017.4.04.7100 | JFRS | - | - | Execução de sentença - Ação Principal nº 97.00.023625-0/RS | Doris Silva Veiga, Eni Terezinha Barbosa de Araújo, Iara Beatriz dos Santos Correa, Ivani Baptista dos Santos, Maria de Fátima Gatto Tosin, Osmar Nunes de Freitas (excluído), Rosaura Maria Silveira Vieira, Rute Pacheco Borges
-
-=== ESCRITÓRIO: RAPHAEL MALINVERNI ===
-0055884-14.2012.4.01.3400 | JFDF - 1ª Vara Cível | 13/11/2012 | - | Ação Ordinária - transformação cargo de Analista Tributário | Lista específica
-0005911-80.2018.4.01.3400 | JFDF - 7ª Vara Cível | - | - | Execução provisória 1 - Nomenclatura | Lista específica
-0012872-86.2008.4.01.3400 | JFDF - 7ª Vara Cível | 22/04/2008 | - | Correção Nomenclatura | Lista específica
-0020259-84.2010.4.01.3400 | JFDF - 22ª Vara Cível | 27/04/2010 | - | Contra descontos de INSS sobre terço de férias | -
-0038104-37.2007.4.01.3400 | JFDF - 16ª Vara Cível | 29/10/2007 | Arquivado | Suspensão prazo retorno INSS | -
-1018458-28.2024.4.01.3400 | JFDF - 7ª Vara Cível | 21/03/2024 | - | Execução provisória 2 - Nomenclatura | Lista específica
-0036028-35.2010.4.01.3400 | JFDF - 9ª Vara Cível | - | - | Exclusão do PECFAZ | -
-1098257-23.2024.4.01.3400 | JFDF - 7ª Vara Cível | 03/12/2024 | - | Segunda Correção Nomenclatura | Lista específica
-0031897-85.2008.4.01.3400 | - | - | - | Suspensão artigo 256-A PECFAZ | -
-1014667-95.2026.4.01.0000 | TRF1 | 20/04/2026 | - | Agravo de Instrumento - MS 1021420-53.2026.4.01.3400 - Portaria DGP/SSC/MGI nº 1.985 de 27/02/2026 | Lista específica: ALDO ROEDEL 309.039.719-68; EDUARDO ROBERTO TORRIERI 206.956.248-49; GLAUCIA DA SILVA CORLAITE 046.427.396-02; JOÃO ALVES DO SANTOS 721.929.338-00; JULIA MARIA THEREZA MURBACK 067.768.948-92; MARIANA THEREZA MURBACK 431.217.398-24; MARCIA MACHADO DE FREITAS 382.441.876-20; MARIA CRISTINA DE CARVALHO 004.823.298-07; MARILDA ANTONIA DE FREITAS PERUSSO 056.460.788-65; MILCIO DE FREITAS BAHIA 296.272.147-87; NEUSA BEATRIZ NOGUEIRA 480.454.460-72; REGINA PEREIRA DE FREITAS KLEIN 607.779.829-00; SUELI MOREIRA PINTO 066.123.708-74
-1021420-53.2026.4.01.3400 | JFDF - 18ª Vara Federal Cível | 04/03/2026 | - | Mandado de Segurança - Portaria DGP/SSC/MGI nº 1.985 de 27/02/2026 | Lista específica: ALDO ROEDEL 309.039.719-68; EDUARDO ROBERTO TORRIERI 206.956.248-49; GLAUCIA DA SILVA CORLAITE 046.427.396-02; JOÃO ALVES DO SANTOS 721.929.338-00; JULIA MARIA THEREZA MURBACK 067.768.948-92; MARIANA THEREZA MURBACK 431.217.398-24; MARCIA MACHADO DE FREITAS 382.441.876-20; MARIA CRISTINA DE CARVALHO 004.823.298-07; MARILDA ANTONIA DE FREITAS PERUSSO 056.460.788-65; MILCIO DE FREITAS BAHIA 296.272.147-87; NEUSA BEATRIZ NOGUEIRA 480.454.460-72; REGINA PEREIRA DE FREITAS KLEIN 607.779.829-00; SUELI MOREIRA PINTO 066.123.708-74
-
-TOTAL DE PROCESSOS: 38 processos/ações identificados
-ESCRITÓRIOS: Equipe Interna, Mota Advogados, Raphael Malinverni` });
-
-console.log('context-static.js carregado com', DOCS.length, 'documentos');
+console.log('context-static.js carregado:', DOCS.length, 'documentos em', [
+  'regras', 'estatuto', 'regimento', 'adi_4151',
+  'portarias (2)', 'ações coletivas (16)', 'processos completo', 'listas 28% (2)'
+].join(' | '));
