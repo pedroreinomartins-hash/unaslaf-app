@@ -55,8 +55,8 @@ export default async function handler(req, res) {
     const sheetId     = process.env.SHEETS_ID;
     const token       = await getAccessToken(credentials);
 
-    // Lê a aba Sheet1 da nova planilha ROLDEASSOCIADOS_APP_CONSOLIDADO
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1?majorDimension=ROWS`;
+    // Lê a aba consolidado_app da planilha App_Cadastro Oficial_Unaslaf
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/consolidado_app?majorDimension=ROWS`;
     const sheetsRes = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });

@@ -1,22 +1,17 @@
-// ── Colunas da planilha ROLDEASSOCIADOS_APP_CONSOLIDADO (Sheet1) ──
-// A: Origem      (0)
-// B: SIAPE       (1)
-// C: Nome        (2)
-// D: CPF         (3) ← chave de busca
+// ── Colunas da planilha App_Cadastro Oficial_Unaslaf (aba consolidado_app) ──
+// A[0]:  SIAPE
+// B[1]:  Nome
+// C[2]:  CPF  ← chave de busca
+// K[10]: Email 1
+// N[13]: Telefone 1
+// Q[16]: Logradouro/Endereço
+// U[20]: Cidade
+// W[22]: UF
+// X[23]: Situação Funcional
+// AI[34]: Órgão
+// AT[45]: Categoria Funcional
 
 import { checkRateLimit, validarToken, extrairToken } from '../lib/_security.js';
-// E: Email       (4)
-// F: Telefone    (5)
-// G: Observações (6)
-// H: Cargo       (7)
-// I: Servidor/Pensionista (8)
-// J: Situação funcional   (9)
-// K: Órgão       (10)
-// L: Endereço    (11)
-// M: Cidade      (12)
-// N: UF          (13)
-// O: Data Atualização (14)
-// P: Alterado por     (15) ← adicionada pelo sistema
 
 async function getAccessToken(credentials) {
   const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
@@ -124,24 +119,24 @@ export default async function handler(req, res) {
     const sheetId     = process.env.SHEETS_ID;
     const token       = await getAccessToken(credentials);
 
-    // Nova estrutura: row enviado pelo frontend
-    // [origem, siape, nome, cpf, email, tel, obs, cargo, servPens, situacao, orgao, end, cidade, uf]
+    // row enviado pelo frontend com campos editáveis
+    // [siape, nome, cpf, email, tel, end, cidade, uf, situacao, cargo]
     const { row, alteradoPor = 'Usuário' } = req.body;
 
-    if (!row || !Array.isArray(row) || !row[3]) {
+    if (!row || !Array.isArray(row) || !row[2]) {
       return res.status(400).json({ error: 'CPF obrigatório' });
     }
 
-    const cpfNovo   = row[3].replace(/\D/g, '');
+    const cpfNovo   = row[2].replace(/\D/g, '');
     const dataAgora = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 
-    // 1. Busca linha existente pelo CPF (coluna D = índice 3)
-    const values      = await getSheetValues(sheetId, 'Sheet1', token);
+    // 1. Busca linha existente pelo CPF (coluna C = índice 2)
+    const values      = await getSheetValues(sheetId, 'consolidado_app', token);
     let foundRowIndex = -1;
     let existingRow   = [];
 
     for (let i = 1; i < values.length; i++) {
-      const cpfExistente = (values[i][3] || '').replace(/\D/g, '');
+      const cpfExistente = (values[i][2] || '').replace(/\D/g, '');
       if (cpfExistente === cpfNovo) {
         foundRowIndex = i + 1; // Sheets é base 1
         existingRow   = values[i];
@@ -149,33 +144,42 @@ export default async function handler(req, res) {
       }
     }
 
-    // 2. Merge: campo em branco no formulário mantém valor existente
-    const merged = row.map((newVal, idx) => {
-      const existing = existingRow[idx] || '';
-      return (newVal !== null && newVal !== undefined && String(newVal).trim() !== '')
-        ? String(newVal).trim()
-        : existing;
-    });
-    while (merged.length < 14) merged.push('');
-
-    const finalRow = [...merged, dataAgora, alteradoPor];
-
-    // 3. Atualiza linha existente ou insere nova
-    if (foundRowIndex > 0) {
-      await updateRow(sheetId, 'Sheet1', foundRowIndex, finalRow, token);
-      console.log(`Atualizado: CPF ${cpfNovo} linha ${foundRowIndex} por ${alteradoPor}`);
-    } else {
-      await appendRow(sheetId, 'Sheet1', finalRow, token);
-      console.log(`Inserido: CPF ${cpfNovo} por ${alteradoPor}`);
+    if (foundRowIndex < 0) {
+      return res.status(404).json({ error: 'Associado não encontrado na planilha.' });
     }
+
+    // 2. Atualiza apenas os campos editáveis na linha existente
+    // Monta cópia da linha existente e aplica apenas os campos do formulário
+    const updatedRow = [...existingRow];
+    while (updatedRow.length < 66) updatedRow.push('');
+
+    // Aplica campos editáveis pelo associado
+    if (row[3]) updatedRow[10] = row[3]; // Email 1  [10]
+    if (row[4]) updatedRow[13] = row[4]; // Telefone 1 [13]
+    if (row[5]) updatedRow[16] = row[5]; // Endereço [16]
+    if (row[6]) updatedRow[20] = row[6]; // Cidade [20]
+    if (row[7]) updatedRow[22] = row[7]; // UF [22]
+
+    // Registra data e responsável nas últimas colunas
+    updatedRow[65] = `Atualizado em ${dataAgora} por ${alteradoPor}`;
+
+    // 3. Atualiza linha existente
+    await updateRow(sheetId, 'consolidado_app', foundRowIndex, updatedRow, token);
+    console.log(`Atualizado: CPF ${cpfNovo} linha ${foundRowIndex} por ${alteradoPor}`);
 
     // 4. Registra no histórico
     await ensureHistoricoSheet(sheetId, token);
-    await appendRow(sheetId, 'Histórico', finalRow, token);
+    const histRow = [
+      dataAgora, alteradoPor, cpfNovo,
+      updatedRow[1], // Nome
+      updatedRow[10], // Email
+      updatedRow[13], // Telefone
+    ];
+    await appendRow(sheetId, 'Histórico', histRow, token);
 
     return res.status(200).json({
       success: true,
-      action: foundRowIndex > 0 ? 'atualizado' : 'inserido',
+      action: 'atualizado',
       alteradoPor,
     });
 
