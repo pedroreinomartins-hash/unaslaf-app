@@ -168,7 +168,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .hist-prev { font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .empty { text-align: center; padding: 48px; color: var(--text2); font-size: 14px; }
 
-/* Documentos */
+/* Canal de verificação */
+.btn-canal { display:flex; align-items:center; gap:14px; width:100%; padding:14px 16px; border-radius:var(--radius); border:2px solid var(--border); background:var(--surface); cursor:pointer; text-align:left; transition:all .15s; }
+.btn-canal:hover { border-color:var(--blue); background:var(--blue-light); }
+.btn-canal:disabled { opacity:.4; cursor:not-allowed; }
 .doc-categoria { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.07em; margin:16px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--border); }
 .doc-card { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); margin-bottom:8px; transition:all .15s; }
 .doc-card:hover { border-color:var(--blue); background:var(--blue-light); }
@@ -239,13 +242,38 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       </div>
     </div>
 
+    <!-- Step 2b: Escolha do canal -->
+    <div class="auth-step" id="s-canal">
+      <div class="step-title">Como deseja receber o código?</div>
+      <div class="step-sub">Escolha o canal de verificação</div>
+      <div style="display:flex;flex-direction:column;gap:12px;margin:20px 0;">
+        <button class="btn-canal" id="btn-canal-wpp" onclick="enviarPorCanal('whatsapp')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M20.52 3.48A11.93 11.93 0 0012 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.23-1.57A11.93 11.93 0 0012 24c6.63 0 12-5.37 12-12 0-3.21-1.25-6.22-3.48-8.52z" fill="#25D366"/><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.49-1.76-1.66-2.06-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51-.17-.01-.37-.01-.57-.01-.2 0-.52.07-.79.37-.27.3-1.04 1.01-1.04 2.47s1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.09 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.75-.71 2-1.4.25-.69.25-1.28.17-1.4-.07-.12-.27-.19-.57-.34z" fill="#fff"/></svg>
+          <div>
+            <div style="font-weight:600;font-size:14px;">WhatsApp</div>
+            <div id="canal-wpp-detalhe" style="font-size:12px;color:var(--text2);margin-top:2px;"></div>
+          </div>
+        </button>
+        <button class="btn-canal" id="btn-canal-email" onclick="enviarPorCanal('email')">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="16" rx="2" stroke="#185FA5" stroke-width="1.5"/><path d="M2 7l10 7 10-7" stroke="#185FA5" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <div>
+            <div style="font-weight:600;font-size:14px;">E-mail</div>
+            <div id="canal-email-detalhe" style="font-size:12px;color:var(--text2);margin-top:2px;"></div>
+          </div>
+        </button>
+      </div>
+      <div class="field-err" id="err-canal" style="display:none;text-align:center;"></div>
+      <div class="auth-footer">
+        <span class="auth-link" onclick="voltarCPF()">← Voltar ao início</span>
+      </div>
+    </div>
+
     <!-- Step 3: Código -->
     <div class="auth-step" id="s-code">
       <div class="step-title">Código de verificação</div>
-      <div class="step-sub">Digite o código de 6 dígitos enviado ao seu WhatsApp</div>
-      <div class="wpp-badge">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20.52 3.48A11.93 11.93 0 0012 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.23-1.57A11.93 11.93 0 0012 24c6.63 0 12-5.37 12-12 0-3.21-1.25-6.22-3.48-8.52z" fill="#25D366"/><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.49-1.76-1.66-2.06-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51-.17-.01-.37-.01-.57-.01-.2 0-.52.07-.79.37-.27.3-1.04 1.01-1.04 2.47s1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.09 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.75-.71 2-1.4.25-.69.25-1.28.17-1.4-.07-.12-.27-.19-.57-.34z" fill="#fff"/></svg>
-        <span>Código enviado para <span class="masked-phone" id="masked-phone"></span></span>
+      <div class="step-sub">Digite o código de 6 dígitos</div>
+      <div class="wpp-badge" id="canal-badge">
+        <span id="canal-badge-texto"></span>
       </div>
       <div class="code-grid">
         <input class="code-box" maxlength="1" id="c0" oninput="codeNav(this,0)" onkeydown="codeBack(event,0)" />
@@ -513,6 +541,11 @@ function maskPhone(raw){
   if(d.length<4) return '****';
   return '('+d.slice(2,4)+') *****-'+d.slice(-4);
 }
+function maskEmail(e){
+  if(!e||!e.includes('@')) return '****';
+  const [u,d]=e.split('@');
+  return u.slice(0,3)+'***@'+d;
+}
 function switchStep(from,to){
   document.getElementById(from).classList.remove('active');
   document.getElementById(to).classList.add('active');
@@ -585,14 +618,68 @@ async function doLookup(){
 
   user.name=foundName;
   user.phone=foundPhone?(foundPhone.startsWith('55')?foundPhone:'55'+foundPhone):'';
-  document.getElementById('masked-phone').textContent=user.phone?maskPhone(user.phone):'número não cadastrado';
+  user.email=(c[4]||'').trim(); // e-mail coluna E da nova planilha
 
-  vCode=String(Math.floor(100000+Math.random()*900000));
-  if(user.phone) await sendWhatsApp(user.phone,`🔐 *UNASLAF — Atendente Virtual*\n\nOlá, ${foundName}!\n\nSeu código de verificação:\n\n*${vCode}*\n\nVálido por 5 minutos. Não compartilhe.`);
+  // Popula tela de escolha de canal com dados mascarados
+  const btnWpp   = document.getElementById('btn-canal-wpp');
+  const btnEmail = document.getElementById('btn-canal-email');
+  if(user.phone){
+    document.getElementById('canal-wpp-detalhe').textContent = maskPhone(user.phone);
+    btnWpp.disabled = false;
+  } else {
+    document.getElementById('canal-wpp-detalhe').textContent = 'Número não cadastrado';
+    btnWpp.disabled = true;
+  }
+  if(user.email){
+    document.getElementById('canal-email-detalhe').textContent = maskEmail(user.email);
+    btnEmail.disabled = false;
+  } else {
+    document.getElementById('canal-email-detalhe').textContent = 'E-mail não cadastrado';
+    btnEmail.disabled = true;
+  }
 
-  switchStep('s-cpf','s-code');
-  document.getElementById('c0').focus();
-  startTimer(300);
+  switchStep('s-cpf','s-canal');
+}
+
+// ── ESCOLHA DO CANAL ─────────────────────────────────────────
+let canalEscolhido = '';
+
+async function enviarPorCanal(canal){
+  canalEscolhido = canal;
+  const errEl = document.getElementById('err-canal');
+  errEl.style.display='none';
+
+  const btn = document.getElementById(canal==='whatsapp'?'btn-canal-wpp':'btn-canal-email');
+  btn.disabled = true;
+  btn.style.opacity = '0.6';
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<div class="spinner" style="margin:auto"></div>';
+
+  vCode = String(Math.floor(100000+Math.random()*900000));
+
+  try {
+    if(canal === 'whatsapp'){
+      await sendWhatsApp(user.phone, `🔐 *UNASLAF — Atendente Virtual*\n\nOlá, ${user.name}!\n\nSeu código de verificação:\n\n*${vCode}*\n\nVálido por 10 minutos. Não compartilhe.`);
+      document.getElementById('canal-badge-texto').innerHTML = `📱 Código enviado para ${maskPhone(user.phone)}`;
+    } else {
+      const r = await fetch('/api/email', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ email: user.email, nome: user.name, codigo: vCode })
+      });
+      if(!r.ok) throw new Error('Falha ao enviar e-mail');
+      document.getElementById('canal-badge-texto').innerHTML = `📧 Código enviado para ${maskEmail(user.email)}`;
+    }
+
+    switchStep('s-canal','s-code');
+    document.getElementById('c0').focus();
+    startTimer(600);
+  } catch(e){
+    btn.disabled = false;
+    btn.style.opacity = '';
+    btn.innerHTML = orig;
+    errEl.textContent = 'Erro ao enviar o código. Tente novamente.';
+    errEl.style.display = 'block';
+  }
 }
 
 // ── WHATSAPP ────────────────────────────────────────────────
@@ -600,10 +687,15 @@ async function sendWhatsApp(phone,message){
   try{ await fetch('/api/whatsapp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,message})}); }
   catch(e){ console.warn('whatsapp error:',e); }
 }
+
 async function resendCode(){
   vCode=String(Math.floor(100000+Math.random()*900000));
-  if(user.phone) await sendWhatsApp(user.phone,`🔐 *UNASLAF*\nNovo código: *${vCode}*\nVálido 5 min.`);
-  startTimer(300); toast('Novo código enviado!','ok');
+  if(canalEscolhido==='email'){
+    await fetch('/api/email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:user.email,nome:user.name,codigo:vCode})});
+  } else {
+    if(user.phone) await sendWhatsApp(user.phone,`🔐 *UNASLAF*\nNovo código: *${vCode}*\nVálido 10 min.`);
+  }
+  startTimer(600); toast('Novo código enviado!','ok');
 }
 
 // ── TIMER ────────────────────────────────────────────────────
