@@ -573,11 +573,14 @@ async function doLookup(){
       // Nova estrutura: [0]Origem [1]SIAPE [2]Nome [3]CPF [4]Email [5]Telefone [6]Obs [7]Cargo [8]Servidor/Pensionista [9]Situação [10]Órgão [11]End [12]Cidade [13]UF [14]Data
       for(let i=1;i<rows.length;i++){
         const c=rows[i]; if(!c||c.length<4) continue;
-        if((c[3]||'').replace(/\D/g,'')===raw){
+        // Nova planilha: [2]=CPF [1]=Nome [12]=Telefone1
+        const cpfCell=(c[2]||'').replace(/\D/g,'');
+        if(!cpfCell||cpfCell.length<11) continue; // pula cabeçalho/linhas inválidas
+        if(cpfCell===raw){
           found=true;
-          foundName=(c[2]||'').trim();
-          foundPhone=(c[5]||'').replace(/\D/g,'');
-          user.data = c; // salva linha completa
+          foundName=(c[1]||'').trim();
+          foundPhone=(c[12]||'').replace(/\D/g,'');
+          user.data = c;
           break;
         }
       }
@@ -654,16 +657,16 @@ function loginSuccess(){
   // Preenche campos do cadastro com todos os dados da planilha
   // Nova estrutura: [0]Origem [1]SIAPE [2]Nome [3]CPF [4]Email [5]Tel [6]Obs [7]Cargo [8]Serv/Pens [9]Situação [10]Órgão [11]End [12]Cidade [13]UF
   document.getElementById('f-cpf').value    = user.cpfFmt;
-  document.getElementById('f-nome').value   = user.data[2]  || '';
-  document.getElementById('f-siape').value  = user.data[1]  || '';
-  document.getElementById('f-cargo').value  = user.data[7]  || '';
-  document.getElementById('f-tel').value    = user.data[5]  || '';
-  document.getElementById('f-email').value  = user.data[4]  || '';
-  document.getElementById('f-end').value    = user.data[11] || '';
-  document.getElementById('f-cidade').value = user.data[12] || '';
-  const uf = user.data[13] || '';
+  document.getElementById('f-nome').value   = user.data[1]  || '';
+  document.getElementById('f-siape').value  = user.data[0]  || '';
+  document.getElementById('f-cargo').value  = user.data[44] || '';
+  document.getElementById('f-tel').value    = user.data[12] || '';
+  document.getElementById('f-email').value  = user.data[10] || '';
+  document.getElementById('f-end').value    = user.data[15] || '';
+  document.getElementById('f-cidade').value = user.data[19] || '';
+  const uf = user.data[21] || '';
   document.getElementById('f-uf').value     = uf.toUpperCase();
-  setSit(user.data[9] || 'Ativo');
+  setSit(user.data[22] || 'Ativo');
 
   // Preenche campo de nome na consulta processual
   document.getElementById('c-cpf').value    = user.cpfFmt;
@@ -868,21 +871,19 @@ async function saveCad() {
 
   // Monta linha na nova ordem da planilha ROLDEASSOCIADOS_APP_CONSOLIDADO:
   // [0]Origem [1]SIAPE [2]Nome [3]CPF [4]Email [5]Tel [6]Obs [7]Cargo [8]Serv/Pens [9]Situação [10]Órgão [11]End [12]Cidade [13]UF
+  // row para cadastro.js — índices mapeados para consolidado_app
+  // [0]SIAPE [1]Nome [2]CPF [3]Email [4]Tel [5]End [6]Cidade [7]UF [8]Situação [9]Cargo
   const row = [
-    user.data[0] || 'Unaslaf',                                  // Origem
-    document.getElementById('f-siape').value.trim(),            // SIAPE
-    nome,                                                        // Nome
-    cpf,                                                         // CPF
-    email,                                                       // Email
-    tel,                                                         // Telefone
-    user.data[6] || '',                                         // Observações (mantém)
-    document.getElementById('f-cargo').value.trim(),            // Cargo
-    user.data[8] || '',                                         // Servidor/Pensionista (mantém)
-    sit,                                                         // Situação funcional
-    user.data[10] || '',                                        // Órgão (mantém)
-    document.getElementById('f-end').value.trim(),              // Endereço
-    document.getElementById('f-cidade').value.trim(),           // Cidade
-    document.getElementById('f-uf').value,                      // UF
+    user.data[0] || '',                                          // [0] SIAPE
+    nome,                                                        // [1] Nome
+    cpf,                                                         // [2] CPF
+    email,                                                       // [3] Email → col[10]
+    tel,                                                         // [4] Telefone → col[12]
+    document.getElementById('f-end').value.trim(),               // [5] Endereço → col[15]
+    document.getElementById('f-cidade').value.trim(),            // [6] Cidade → col[19]
+    document.getElementById('f-uf').value,                       // [7] UF → col[21]
+    sit,                                                         // [8] Situação → col[22]
+    document.getElementById('f-cargo').value.trim(),             // [9] Cargo → col[44]
   ];
 
   try {
