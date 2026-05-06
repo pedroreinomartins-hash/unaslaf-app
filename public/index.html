@@ -3,477 +3,1093 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>UNASLAF — Atendente Virtual</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23185FA5'/><text x='4' y='24' font-size='20' fill='white' font-family='sans-serif' font-weight='bold'>U</text></svg>" />
+<title>UNASLAF — Atendente Virtual do Associado</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --blue: #185FA5;
-  --blue-dark: #0C447C;
-  --blue-light: #E6F1FB;
-  --green-bg: #EAF3DE;
-  --green-text: #3B6D11;
-  --warn-bg: #FAEEDA;
-  --warn-text: #854F0B;
-  --danger-bg: #FCEBEB;
-  --danger-text: #A32D2D;
-  --border: #e2e2e2;
-  --bg: #f7f8fa;
-  --surface: #ffffff;
-  --surface2: #f0f2f5;
-  --text: #1a1a1a;
-  --text2: #666;
-  --radius: 10px;
-  --radius-sm: 6px;
-}
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100dvh; display: flex; flex-direction: column; }
+  :root {
+    --primary: #1a4f8a;
+    --primary-dark: #123869;
+    --primary-light: #2563a8;
+    --accent: #e8a020;
+    --accent-dark: #c68010;
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #f8fafc;
+    --border: #d1dce8;
+    --text: #1e2d3d;
+    --text2: #4a6070;
+    --text3: #7a92a6;
+    --danger: #c0392b;
+    --danger-bg: #fdf0ef;
+    --success: #1a7a45;
+    --success-bg: #edfaf3;
+    --warning: #8a5a00;
+    --warning-bg: #fff8e6;
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(26,79,138,.10);
+    --shadow-lg: 0 8px 32px rgba(26,79,138,.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
 
-/* ── AUTH ── */
-#auth-screen { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; }
-.auth-card { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
-.auth-logo { text-align: center; margin-bottom: 28px; }
-.auth-logo-main { font-size: 28px; font-weight: 700; color: var(--blue); letter-spacing: -1px; }
-.auth-logo-sub { font-size: 13px; color: var(--text2); margin-top: 4px; }
-.auth-step { display: none; }
-.auth-step.active { display: block; }
-.step-title { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
-.step-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.6; }
-.flabel { font-size: 12px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
-.finput { width: 100%; padding: 11px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); font-size: 15px; color: var(--text); font-family: inherit; outline: none; margin-bottom: 14px; transition: border-color .15s; }
-.finput:focus { border-color: var(--blue); background: #fff; }
-.btn-primary { width: 100%; padding: 12px; border-radius: var(--radius-sm); background: var(--blue); color: #fff; border: none; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity .15s; }
-.btn-primary:hover { opacity: .88; }
-.btn-primary:disabled { opacity: .5; cursor: default; }
-.btn-outline { width: 100%; padding: 11px; border-radius: var(--radius-sm); background: transparent; color: var(--blue); border: 1px solid var(--blue); font-size: 14px; font-weight: 600; cursor: pointer; }
-.spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.field-err { font-size: 12px; color: var(--danger-text); margin-top: -10px; margin-bottom: 12px; display: none; }
-.auth-footer { font-size: 12px; color: var(--text2); text-align: center; margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
-.auth-link { color: var(--blue); cursor: pointer; font-weight: 500; }
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: linear-gradient(135deg, #1a4f8a 0%, #0e2f5a 100%);
+  }
+  .auth-card {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+  }
+  .auth-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    padding: 32px 28px 24px;
+    text-align: center;
+    color: white;
+  }
+  .auth-logo {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .auth-subtitle {
+    font-size: 13px;
+    opacity: .75;
+    font-weight: 400;
+  }
+  .auth-body { padding: 32px 28px; }
+  .auth-body h2 {
+    font-size: 17px;
+    color: var(--primary);
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 6px;
+  }
+  .form-group input {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    color: var(--text);
+    background: var(--surface2);
+    transition: border-color .2s;
+    outline: none;
+  }
+  .form-group input:focus { border-color: var(--primary); background: white; }
+  .form-group input.error { border-color: var(--danger); background: var(--danger-bg); }
+  .btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+  }
+  .btn:hover:not(:disabled) { background: var(--primary-light); }
+  .btn:active:not(:disabled) { transform: scale(.99); }
+  .btn:disabled { background: #b0c0d0; cursor: not-allowed; }
+  .btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--primary);
+    color: var(--primary);
+    margin-top: 10px;
+  }
+  .btn-outline:hover:not(:disabled) { background: var(--primary); color: white; }
+  .auth-msg {
+    margin-top: 14px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    line-height: 1.5;
+    display: none;
+  }
+  .auth-msg.error { background: var(--danger-bg); color: var(--danger); border: 1px solid #f5c6c2; display: block; }
+  .auth-msg.success { background: var(--success-bg); color: var(--success); border: 1px solid #b7edcf; display: block; }
+  .auth-privacy {
+    margin-top: 18px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .auth-privacy span { margin-right: 5px; }
 
-/* Não encontrado */
-.nf-box { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; text-align: center; }
-.nf-icon { width: 52px; height: 52px; border-radius: 50%; background: #FAECE7; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
-.nf-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-.nf-text { font-size: 13px; color: var(--text2); line-height: 1.7; margin-bottom: 20px; }
-.nf-steps { text-align: left; background: var(--surface); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
-.nf-step { display: flex; gap: 10px; font-size: 13px; color: var(--text2); line-height: 1.5; }
-.nf-num { width: 22px; height: 22px; border-radius: 50%; background: var(--blue-light); color: var(--blue); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  /* ── MAIN APP ── */
+  #app-screen { display: none; flex-direction: column; min-height: 100vh; }
 
-/* WhatsApp badge */
-.wpp-badge { display: flex; align-items: center; gap: 10px; background: #e8f5e9; color: #2e7d32; font-size: 13px; padding: 10px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; line-height: 1.5; }
-.masked-phone { font-weight: 700; font-family: monospace; font-size: 14px; }
+  /* Top bar */
+  .topbar {
+    background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 56px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-brand { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+  .topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .topbar-user strong { font-weight: 600; }
+  .btn-sair {
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-sair:hover { background: rgba(255,255,255,.25); }
 
-/* Código */
-.code-grid { display: flex; gap: 8px; justify-content: center; margin-bottom: 16px; }
-.code-box { width: 46px; height: 56px; text-align: center; font-size: 24px; font-weight: 700; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); color: var(--text); outline: none; transition: border-color .15s; }
-.code-box:focus { border-color: var(--blue); background: #fff; }
-.timer-row { font-size: 12px; color: var(--text2); text-align: center; margin-top: 10px; }
-.timer-warn { color: var(--danger-text) !important; }
+  /* Nav */
+  .nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 8px;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 14px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    transition: color .2s, border-color .2s;
+  }
+  .nav-item:hover { color: var(--primary); }
+  .nav-item.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .nav-item .icon { font-size: 16px; }
 
-/* ── APP ── */
-#app { flex: 1; display: none; flex-direction: column; overflow: hidden; max-width: 1100px; width: 100%; margin: 0 auto; }
-.app-inner { flex: 1; display: flex; flex-direction: row; overflow: hidden; min-height: 0; }
+  /* Conteúdo */
+  .content {
+    flex: 1;
+    padding: 0;
+    overflow: hidden;
+  }
+  .tab-panel { display: none; height: calc(100vh - 56px - 48px); overflow: hidden; flex-direction: column; }
+  .tab-panel.active { display: flex; }
 
-/* Topbar */
-.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; height: 56px; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.topbar-logo { font-size: 18px; font-weight: 700; color: var(--blue); }
-.topbar-sep { width: 1px; height: 20px; background: var(--border); }
-.topbar-user { font-size: 13px; color: var(--text2); flex: 1; }
-.topbar-user strong { color: var(--text); }
-.topbar-badge { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--green-bg); color: var(--green-text); font-weight: 600; }
+  /* ── CHAT ── */
+  .chat-warning {
+    background: var(--warning-bg);
+    border-bottom: 1px solid #f0d090;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--warning);
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+  }
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: var(--bg);
+  }
+  .chat-msg {
+    max-width: 80%;
+    padding: 12px 15px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.55;
+    word-break: break-word;
+  }
+  .chat-msg.user {
+    background: var(--primary);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-msg.bot {
+    background: var(--surface);
+    color: var(--text);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow);
+  }
+  .chat-msg.bot strong { color: var(--primary); }
+  .chat-typing {
+    align-self: flex-start;
+    background: var(--surface);
+    padding: 12px 15px;
+    border-radius: 14px;
+    border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow);
+    display: none;
+    gap: 5px;
+    align-items: center;
+  }
+  .chat-typing span {
+    width: 8px; height: 8px;
+    background: var(--primary);
+    border-radius: 50%;
+    animation: bounce .8s infinite;
+  }
+  .chat-typing span:nth-child(2) { animation-delay: .15s; }
+  .chat-typing span:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-6px); }
+  }
+  .chat-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--surface2);
+    border-top: 1px solid var(--border);
+  }
+  .chip {
+    padding: 6px 14px;
+    background: white;
+    border: 1.5px solid var(--primary);
+    border-radius: 20px;
+    font-size: 12.5px;
+    color: var(--primary);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all .2s;
+  }
+  .chip:hover { background: var(--primary); color: white; }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+  .chat-input-row input {
+    flex: 1;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 24px;
+    font-size: 14px;
+    outline: none;
+    background: var(--surface2);
+    transition: border-color .2s;
+  }
+  .chat-input-row input:focus { border-color: var(--primary); background: white; }
+  .btn-send {
+    width: 44px; height: 44px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .2s;
+    flex-shrink: 0;
+  }
+  .btn-send:hover { background: var(--primary-light); }
+  .btn-send:disabled { background: #b0c0d0; cursor: not-allowed; }
 
-/* Sidebar */
-.sidebar { width: 210px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 12px 8px; gap: 2px; }
-.nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; color: var(--text2); transition: all .15s; border: none; background: none; width: 100%; text-align: left; font-family: inherit; }
-.nav-btn:hover { background: var(--surface2); color: var(--text); }
-.nav-btn.active { background: var(--blue-light); color: var(--blue); font-weight: 600; }
-.nav-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+  /* ── CADASTRO ── */
+  .form-page {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .form-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .form-card h2 {
+    font-size: 17px;
+    color: var(--primary);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group-inline { margin-bottom: 14px; }
+  .form-group-inline label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 5px;
+  }
+  .form-group-inline input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface2);
+    outline: none;
+    transition: border-color .2s;
+  }
+  .form-group-inline input:focus { border-color: var(--primary); background: white; }
+  .form-group-inline input.required-empty { border-color: var(--danger); background: var(--danger-bg); }
+  .form-group-inline input[readonly] {
+    background: #eef2f6;
+    color: var(--text3);
+    cursor: default;
+  }
+  .readonly-label {
+    font-size: 11px;
+    color: var(--text3);
+    margin-left: 4px;
+    font-weight: normal;
+  }
+  .btn-salvar {
+    margin-top: 20px;
+    padding: 13px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background .2s;
+  }
+  .btn-salvar:hover:not(:disabled) { background: var(--primary-light); }
+  .btn-salvar:disabled { background: #b0c0d0; cursor: not-allowed; }
+  .save-msg {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13.5px;
+    display: none;
+  }
+  .save-msg.success { display: block; background: var(--success-bg); color: var(--success); border: 1px solid #b7edcf; }
+  .save-msg.error   { display: block; background: var(--danger-bg); color: var(--danger); border: 1px solid #f5c6c2; }
 
-/* Main */
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
-.panel { flex: 1; display: none; flex-direction: column; overflow: hidden; }
-.panel.active { display: flex; }
-.panel-header { padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.panel-header-title { font-size: 15px; font-weight: 600; flex: 1; }
-.panel-badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
-.panel-badge.online { background: var(--green-bg); color: var(--green-text); }
-.panel-badge.ai { background: #EEEDFE; color: #534AB7; }
+  /* ── DOCUMENTOS ── */
+  .docs-page { padding: 20px; overflow-y: auto; flex: 1; }
+  .docs-search {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    max-width: 600px;
+  }
+  .docs-search input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    outline: none;
+    background: white;
+  }
+  .docs-search input:focus { border-color: var(--primary); }
+  .docs-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .filter-btn {
+    padding: 6px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    font-size: 12.5px;
+    background: white;
+    cursor: pointer;
+    color: var(--text2);
+    font-weight: 500;
+    transition: all .2s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .docs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+    max-width: 900px;
+  }
+  .doc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: box-shadow .2s, transform .1s;
+  }
+  .doc-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+  .doc-icon { font-size: 28px; }
+  .doc-nome { font-size: 14px; font-weight: 600; color: var(--text); }
+  .doc-meta { font-size: 12px; color: var(--text3); }
+  .doc-cat {
+    display: inline-block;
+    padding: 2px 10px;
+    background: #e8f0fb;
+    color: var(--primary);
+    border-radius: 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+  .btn-baixar {
+    margin-top: 6px;
+    padding: 8px 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    transition: background .2s;
+  }
+  .btn-baixar:hover { background: var(--primary-light); }
+  .docs-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text3);
+    font-size: 14px;
+  }
+  .loading-msg {
+    text-align: center;
+    padding: 30px;
+    color: var(--text3);
+    font-size: 14px;
+  }
 
-/* Chat */
-.chat-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
-.msg { display: flex; gap: 10px; align-items: flex-start; }
-.msg.user { flex-direction: row-reverse; }
-.msg-av { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
-.msg-av.bot { background: var(--blue-light); color: var(--blue); }
-.msg-av.usr { background: var(--surface2); color: var(--text2); }
-.msg-bubble { max-width: 75%; padding: 11px 14px; font-size: 14px; line-height: 1.65; }
-.msg-bubble.bot { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 2px 12px 12px 12px; }
-.msg-bubble.usr { background: var(--blue); color: #fff; border-radius: 12px 2px 12px 12px; }
-.msg-time { font-size: 11px; color: var(--text2); margin-top: 4px; }
-.msg-time.r { text-align: right; }
-.typing-dots { display: flex; gap: 4px; align-items: center; padding: 4px 0; }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text2); animation: blink 1.2s infinite; }
-.dot:nth-child(2){animation-delay:.2s;} .dot:nth-child(3){animation-delay:.4s;}
-@keyframes blink{0%,80%,100%{opacity:.2;}40%{opacity:1;}}
-.chips { display: flex; gap: 6px; flex-wrap: wrap; padding: 0 20px 12px; }
-.chip { font-size: 12px; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--text2); cursor: pointer; transition: all .15s; white-space: nowrap; }
-.chip:hover { background: var(--blue-light); color: var(--blue); border-color: var(--blue); }
-.chat-input-area { padding: 12px 16px; border-top: 1px solid var(--border); background: var(--surface); display: flex; gap: 8px; align-items: flex-end; flex-shrink: 0; }
-.chat-ta { flex: 1; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); font-size: 14px; color: var(--text); resize: none; min-height: 40px; max-height: 100px; font-family: inherit; outline: none; }
-.chat-ta:focus { border-color: var(--blue); background: #fff; }
-.icon-btn { width: 40px; height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--text2); }
-.icon-btn:hover { background: var(--blue-light); color: var(--blue); }
-.send-btn { width: 40px; height: 40px; border-radius: var(--radius-sm); background: var(--blue); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.send-btn:hover { opacity: .85; }
+  /* Mensagem inicial do chat */
+  .welcome-msg {
+    background: linear-gradient(135deg, #e8f0fb, #f0f7ff);
+    border: 1px solid #c5d9f0;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 4px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+    max-width: 80%;
+    box-shadow: var(--shadow);
+  }
+  .welcome-msg strong { color: var(--primary); }
 
-/* Formulários */
-.scroll-area { flex: 1; overflow-y: auto; padding: 20px; }
-.fsec { margin-bottom: 24px; }
-.fsec-title { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
-.fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.fgrp { display: flex; flex-direction: column; gap: 5px; }
-.fgrp.full { grid-column: 1/-1; }
-.form-label { font-size: 12px; color: var(--text2); font-weight: 500; }
-.form-input { padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); font-size: 14px; color: var(--text); font-family: inherit; outline: none; }
-.form-input:focus { border-color: var(--blue); background: #fff; }
-.form-input[readonly] { color: var(--text2); cursor: default; }
-.form-select { padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); font-size: 14px; color: var(--text); font-family: inherit; outline: none; }
-.sit-row { display: flex; gap: 8px; }
-.sit-btn { flex: 1; padding: 9px 6px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); font-size: 13px; color: var(--text2); cursor: pointer; text-align: center; transition: all .15s; font-family: inherit; }
-.sit-btn.on { background: var(--blue-light); color: var(--blue); border-color: var(--blue); font-weight: 600; }
-.form-actions { display: flex; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
-.btn-sec { padding: 10px 18px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface2); color: var(--text2); font-size: 14px; cursor: pointer; font-family: inherit; }
+  /* Scroll smooth */
+  .chat-messages { scroll-behavior: smooth; }
 
-/* Consulta */
-.info-box { background: var(--blue-light); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--blue-dark); line-height: 1.6; }
-
-/* Arquivos */
-.drop-zone { border: 1.5px dashed var(--border); border-radius: var(--radius); padding: 28px; text-align: center; color: var(--text2); font-size: 14px; cursor: pointer; background: var(--surface); margin-bottom: 14px; transition: all .15s; }
-.drop-zone:hover { border-color: var(--blue); color: var(--blue); }
-.file-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); margin-bottom: 8px; font-size: 13px; }
-.file-name { flex: 1; color: var(--text); }
-.file-size { color: var(--text2); }
-.file-tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--green-bg); color: var(--green-text); font-weight: 600; }
-
-/* Histórico */
-.hist-row { padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); margin-bottom: 10px; }
-.hist-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-.hist-tag { font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
-.hist-tag.chat { background: var(--blue-light); color: var(--blue); }
-.hist-tag.cad { background: var(--green-bg); color: var(--green-text); }
-.hist-tag.arq { background: var(--warn-bg); color: var(--warn-text); }
-.hist-tag.cons { background: #EEEDFE; color: #534AB7; }
-.hist-date { font-size: 11px; color: var(--text2); margin-left: auto; }
-.hist-prev { font-size: 13px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.empty { text-align: center; padding: 48px; color: var(--text2); font-size: 14px; }
-
-/* Canal de verificação */
-.btn-canal { display:flex; align-items:center; gap:14px; width:100%; padding:14px 16px; border-radius:var(--radius); border:2px solid var(--border); background:var(--surface); cursor:pointer; text-align:left; transition:all .15s; }
-.btn-canal:hover { border-color:var(--blue); background:var(--blue-light); }
-.btn-canal:disabled { opacity:.4; cursor:not-allowed; }
-.doc-categoria { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:.07em; margin:16px 0 8px; padding-bottom:6px; border-bottom:1px solid var(--border); }
-.doc-card { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface); margin-bottom:8px; transition:all .15s; }
-.doc-card:hover { border-color:var(--blue); background:var(--blue-light); }
-.doc-icon { font-size:24px; flex-shrink:0; }
-.doc-info { flex:1; min-width:0; }
-.doc-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
-.doc-meta { font-size:11px; color:var(--text2); }
-.doc-download { display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:var(--radius-sm); background:var(--blue); color:#fff; font-size:12px; font-weight:600; border:none; cursor:pointer; flex-shrink:0; text-decoration:none; transition:opacity .15s; }
-.doc-download:hover { opacity:.85; }
-.toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 18px; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; color: #fff; background: var(--blue-dark); opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 9999; max-width: 300px; box-shadow: 0 4px 16px rgba(0,0,0,.15); }
-.toast.on { opacity: 1; }
-.toast.ok { background: #3B6D11; }
-.toast.err { background: #A32D2D; }
-
-/* Responsive */
-@media (max-width: 600px) {
-  .sidebar { width: 52px; }
-  .nav-btn span { display: none; }
-  .topbar-user { display: none; }
-  .fgrid { grid-template-columns: 1fr; }
-  .fgrp.full { grid-column: 1/-1; }
-}
+  @media (max-width: 500px) {
+    .form-row { grid-template-columns: 1fr; }
+    .chat-msg { max-width: 92%; }
+    .docs-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 
-<div class="toast" id="toast"></div>
-
-<!-- ── AUTH ── -->
+<!-- ═══════════════════════════════════════════════
+     TELA DE AUTENTICAÇÃO
+════════════════════════════════════════════════ -->
 <div id="auth-screen">
   <div class="auth-card">
-    <div class="auth-logo">
-      <div class="auth-logo-main">UNASLAF</div>
-      <div class="auth-logo-sub">Atendente Virtual do Associado</div>
+    <div class="auth-header">
+      <div class="auth-logo">UNASLAF</div>
+      <div class="auth-subtitle">Atendente Virtual do Associado</div>
     </div>
+    <div class="auth-body">
 
-    <!-- Step 1: CPF -->
-    <div class="auth-step active" id="s-cpf">
-      <div class="step-title">Identificação</div>
-      <div class="step-sub">Informe seu CPF para acessar o atendimento</div>
-      <div class="flabel">CPF</div>
-      <input class="finput" id="in-cpf" placeholder="000.000.000-00" maxlength="14"
-        oninput="maskCPF(this)" onkeydown="if(event.key==='Enter')doLookup()" autocomplete="off" />
-      <div class="field-err" id="err-cpf">CPF inválido. Verifique e tente novamente.</div>
-      <button class="btn-primary" id="btn-lookup" onclick="doLookup()">
-        <span id="btn-lbl">Continuar</span>
-      </button>
-      <div class="auth-footer">
-        <span>🔒 Seus dados são protegidos e criptografados</span>
-      </div>
-    </div>
-
-    <!-- Step 2: Não encontrado -->
-    <div class="auth-step" id="s-notfound">
-      <div class="nf-box">
-        <div class="nf-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#D85A30" stroke-width="1.5"/><path d="M12 8v4m0 4v.01" stroke="#D85A30" stroke-width="2" stroke-linecap="round"/></svg>
+      <!-- Etapa 1: CPF -->
+      <div id="step-cpf">
+        <h2>Acesso com CPF</h2>
+        <div class="form-group">
+          <label>CPF</label>
+          <input type="text" id="input-cpf" placeholder="000.000.000-00" maxlength="14" autocomplete="off" />
         </div>
-        <div class="nf-title">CPF não encontrado</div>
-        <div class="nf-text">O CPF <strong id="nf-cpf"></strong> não consta na base de associados da Unaslaf.</div>
-        <div class="nf-steps">
-          <div class="nf-step"><div class="nf-num">1</div><span>Envie sua ficha de atualização cadastral pelo site <strong>unaslaf.org.br</strong></span></div>
-          <div class="nf-step"><div class="nf-num">2</div><span>Aguarde o processamento pela Unaslaf (até 2 dias úteis)</span></div>
-          <div class="nf-step"><div class="nf-num">3</div><span>Certifique-se de que seu <strong>WhatsApp</strong> está correto no cadastro</span></div>
-          <div class="nf-step"><div class="nf-num">4</div><span>Retorne aqui e tente novamente</span></div>
+        <button class="btn" id="btn-enviar-cpf" onclick="enviarCPF()">Continuar</button>
+        <div class="auth-msg" id="msg-cpf"></div>
+        <div class="auth-privacy">
+          <span>🔒</span> Seus dados são protegidos e criptografados
         </div>
-        <button class="btn-outline" onclick="voltarCPF()">Tentar com outro CPF</button>
       </div>
-    </div>
 
-    <!-- Step 3: Código -->
-    <div class="auth-step" id="s-code">
-      <div class="step-title">Código de verificação</div>
-      <div class="step-sub">Digite o código de 6 dígitos enviado ao seu WhatsApp</div>
-      <div class="wpp-badge">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20.52 3.48A11.93 11.93 0 0012 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.23-1.57A11.93 11.93 0 0012 24c6.63 0 12-5.37 12-12 0-3.21-1.25-6.22-3.48-8.52z" fill="#25D366"/><path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.47-.89-.79-1.49-1.76-1.66-2.06-.17-.3-.02-.46.13-.6.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.67-1.61-.92-2.2-.24-.58-.49-.5-.67-.51-.17-.01-.37-.01-.57-.01-.2 0-.52.07-.79.37-.27.3-1.04 1.01-1.04 2.47s1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.09 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.75-.71 2-1.4.25-.69.25-1.28.17-1.4-.07-.12-.27-.19-.57-.34z" fill="#fff"/></svg>
-        <span>Código enviado para <span class="masked-phone" id="masked-phone"></span></span>
+      <!-- Etapa 2: Código -->
+      <div id="step-code" style="display:none">
+        <h2 id="code-title">Código de verificação</h2>
+        <p style="font-size:13.5px;color:var(--text2);margin-bottom:16px;" id="code-subtitle"></p>
+        <div class="form-group">
+          <label>Código de 6 dígitos</label>
+          <input type="text" id="input-code" placeholder="000000" maxlength="6" autocomplete="off" />
+        </div>
+        <button class="btn" id="btn-verificar" onclick="verificarCodigo()">Entrar</button>
+        <button class="btn btn-outline" onclick="voltarCPF()">← Voltar</button>
+        <div class="auth-msg" id="msg-code"></div>
       </div>
-      <div class="code-grid">
-        <input class="code-box" maxlength="1" id="c0" oninput="codeNav(this,0)" onkeydown="codeBack(event,0)" />
-        <input class="code-box" maxlength="1" id="c1" oninput="codeNav(this,1)" onkeydown="codeBack(event,1)" />
-        <input class="code-box" maxlength="1" id="c2" oninput="codeNav(this,2)" onkeydown="codeBack(event,2)" />
-        <input class="code-box" maxlength="1" id="c3" oninput="codeNav(this,3)" onkeydown="codeBack(event,3)" />
-        <input class="code-box" maxlength="1" id="c4" oninput="codeNav(this,4)" onkeydown="codeBack(event,4)" />
-        <input class="code-box" maxlength="1" id="c5" oninput="codeNav(this,5)" onkeydown="codeBack(event,5)" />
-      </div>
-      <div class="field-err" id="err-code" style="display:none;text-align:center;">Código incorreto. Tente novamente.</div>
-      <button class="btn-primary" onclick="verifyCode()">Verificar e entrar</button>
-      <div class="timer-row" id="timer-row">Código expira em <span id="timer">05:00</span></div>
-      <div class="auth-footer">
-        <span>Não recebeu? <span class="auth-link" onclick="resendCode()">Reenviar código</span></span>
-        <span class="auth-link" onclick="voltarCPF()">← Voltar ao início</span>
-      </div>
+
     </div>
   </div>
 </div>
 
-<!-- ── APP ── -->
-<div id="app">
-  <!-- Topbar -->
+<!-- ═══════════════════════════════════════════════
+     APP PRINCIPAL
+════════════════════════════════════════════════ -->
+<div id="app-screen">
   <div class="topbar">
-    <div class="topbar-logo">UNASLAF</div>
-    <div class="topbar-sep"></div>
-    <div class="topbar-user">Bem-vindo, <strong id="top-name">Associado</strong> &nbsp;·&nbsp; <span id="top-cpf"></span></div>
-    <div class="topbar-badge">Online</div>
+    <div class="topbar-brand">UNASLAF</div>
+    <div class="topbar-user">
+      <strong id="topbar-nome">—</strong>
+      <button class="btn-sair" onclick="sair()">Sair</button>
+    </div>
   </div>
 
-  <div class="app-inner">
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <button class="nav-btn active" onclick="showPanel('chat',this)">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M14 9.333A1.333 1.333 0 0112.667 10.667H4.667L2 13.333V3.333A1.333 1.333 0 013.333 2H12.667A1.333 1.333 0 0114 3.333V9.333z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
-        <span>Atendimento</span>
-      </button>
-      <button class="nav-btn" onclick="showPanel('consulta',this)">
-        <svg viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.3"/><path d="M11.5 11.5L14 14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        <span>Consulta Processual</span>
-      </button>
-      <button class="nav-btn" onclick="showPanel('cadastro',this)">
-        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M2 13.5c0-2.485 2.686-4.5 6-4.5s6 2.015 6 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        <span>Atualizar Cadastro</span>
-      </button>
-      <button class="nav-btn" onclick="showPanel('historico',this)">
-        <svg viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M8 5v3.5l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-        <span>Histórico</span>
-      </button>
-      <button class="nav-btn" onclick="showPanel('documentos',this);loadDocumentos()">
-        <svg viewBox="0 0 16 16" fill="none"><path d="M13 3H7L5 1H3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
-        <span>Documentos</span>
-      </button>
-    </div><!-- /sidebar -->
+  <nav class="nav">
+    <div class="nav-item active" onclick="showTab('chat')" data-tab="chat">
+      <span class="icon">💬</span> Atendimento
+    </div>
+    <div class="nav-item" onclick="showTab('cadastro')" data-tab="cadastro">
+      <span class="icon">👤</span> Meu Cadastro
+    </div>
+    <div class="nav-item" onclick="showTab('documentos')" data-tab="documentos">
+      <span class="icon">📁</span> Documentos
+    </div>
+  </nav>
 
-    <!-- Main -->
-    <div class="main">
+  <div class="content">
 
-      <!-- CHAT -->
-      <div class="panel active" id="panel-chat">
-        <div class="panel-header">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M14 9.333A1.333 1.333 0 0112.667 10.667H4.667L2 13.333V3.333A1.333 1.333 0 013.333 2H12.667A1.333 1.333 0 0114 3.333V9.333z" stroke="#185FA5" stroke-width="1.3" stroke-linejoin="round"/></svg>
-          <span class="panel-header-title">Atendimento</span>
-          <span class="panel-badge online">Online</span>
+    <!-- ── CHAT ── -->
+    <div class="tab-panel active" id="tab-chat">
+      <div class="chat-warning">
+        ⚠️ As informações geradas por inteligência artificial têm caráter orientativo e não oficial. Não substituem assessoria jurídica especializada ou canais oficiais.
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="welcome-msg">
+          Olá! Sou o Atendente Virtual da <strong>UNASLAF</strong>. Posso responder dúvidas sobre ações coletivas, ADI 4151, estatuto, filiação e muito mais.<br><br>
+          Como posso ajudar você hoje?
         </div>
-        <div style="background:#FFF8E1;border-bottom:1px solid #F9A825;padding:10px 16px;font-size:12px;color:#6D4C00;line-height:1.6;flex-shrink:0;">
-          ⚠️ <strong>Aviso importante:</strong> As informações geradas por inteligência artificial têm caráter <strong>orientativo e não oficial</strong>. Não substituem a consulta aos canais oficiais de informação processual, a assessoria jurídica especializada ou as autoridades competentes. Utilize este recurso apenas como ponto de partida para direcionar sua pesquisa.
-        </div>
-        <div class="chat-body" id="chat-msgs"></div>
-        <div class="chips" id="chips-area">
-          <span class="chip" onclick="chip('O que é a Unaslaf?')">O que é a Unaslaf?</span>
-          <span class="chip" onclick="chip('Quais ações coletivas estão em andamento?')">Ações coletivas</span>
-          <span class="chip" onclick="chip('Qual o resultado da ADI 4151?')">ADI 4151</span>
-          <span class="chip" onclick="chip('Como me filiar à Unaslaf?')">Como me filiar</span>
-          <span class="chip" onclick="chip('Quais são os direitos dos associados?')">Direitos dos associados</span>
-        </div>
-        <div class="chat-input-area">
-          <button class="icon-btn" onclick="document.getElementById('fi-chat').click()" title="Anexar arquivo">
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M13.5 9.5l-5 5a4.5 4.5 0 01-6.364-6.364l6-6a3 3 0 014.243 4.243l-6 6a1.5 1.5 0 01-2.122-2.122l5-5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="chat-typing" id="chat-typing">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="chat-chips">
+        <div class="chip" onclick="sendChip('O que é a UNASLAF?')">O que é a UNASLAF?</div>
+        <div class="chip" onclick="sendChip('Quais são as ações coletivas?')">Ações coletivas</div>
+        <div class="chip" onclick="sendChip('O que é a ADI 4151?')">ADI 4151</div>
+        <div class="chip" onclick="sendChip('Como me filiar à UNASLAF?')">Como me filiar</div>
+        <div class="chip" onclick="sendChip('Quais são os direitos dos associados?')">Direitos</div>
+      </div>
+      <div class="chat-input-row">
+        <input
+          type="text"
+          id="chat-input"
+          placeholder="Digite sua mensagem…"
+          onkeydown="if(event.key==='Enter')sendMessage()"
+        />
+        <button class="btn-send" id="btn-send" onclick="sendMessage()" title="Enviar">➤</button>
+      </div>
+    </div>
+
+    <!-- ── CADASTRO ── -->
+    <div class="tab-panel" id="tab-cadastro">
+      <div class="form-page">
+        <div class="form-card">
+          <h2>📋 Meu Cadastro</h2>
+          <div class="form-row">
+            <div class="form-group-inline" style="grid-column:1/-1">
+              <label>Nome completo <span style="color:var(--danger)">*</span></label>
+              <input type="text" id="cad-nome" placeholder="Nome completo" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group-inline">
+              <label>CPF <span class="readonly-label">🔒 bloqueado</span></label>
+              <input type="text" id="cad-cpf" readonly />
+            </div>
+            <div class="form-group-inline">
+              <label>SIAPE <span class="readonly-label">🔒 bloqueado</span></label>
+              <input type="text" id="cad-siape" readonly />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group-inline">
+              <label>E-mail <span style="color:var(--danger)">*</span></label>
+              <input type="email" id="cad-email" placeholder="seu@email.com" />
+            </div>
+            <div class="form-group-inline">
+              <label>Telefone/WhatsApp <span style="color:var(--danger)">*</span></label>
+              <input type="text" id="cad-telefone" placeholder="5519991234567" />
+            </div>
+          </div>
+          <div class="form-group-inline">
+            <label>Endereço</label>
+            <input type="text" id="cad-endereco" placeholder="Rua, número, bairro" />
+          </div>
+          <div class="form-row">
+            <div class="form-group-inline">
+              <label>Cidade</label>
+              <input type="text" id="cad-cidade" placeholder="Cidade" />
+            </div>
+            <div class="form-group-inline">
+              <label>UF</label>
+              <input type="text" id="cad-uf" placeholder="DF" maxlength="2" />
+            </div>
+          </div>
+          <button class="btn-salvar" id="btn-salvar" onclick="salvarCadastro()" disabled>
+            💾 Salvar Cadastro
           </button>
-          <input type="file" id="fi-chat" style="display:none" onchange="chatFile(this)" />
-          <textarea class="chat-ta" id="chat-in" placeholder="Digite sua mensagem..." rows="1"
-            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg();}"></textarea>
-          <button class="send-btn" onclick="sendMsg()">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M14 2L2 7l5 2 2 5 5-12z" fill="white"/></svg>
-          </button>
+          <div class="save-msg" id="save-msg"></div>
         </div>
       </div>
+    </div>
 
-      <!-- CONSULTA -->
-      <div class="panel" id="panel-consulta">
-        <div class="panel-header">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#185FA5" stroke-width="1.3"/><path d="M11.5 11.5L14 14" stroke="#185FA5" stroke-width="1.3" stroke-linecap="round"/></svg>
-          <span class="panel-header-title">Consulta Processual</span>
-          <span class="panel-badge ai">IA</span>
+    <!-- ── DOCUMENTOS ── -->
+    <div class="tab-panel" id="tab-documentos">
+      <div class="docs-page">
+        <div class="docs-search">
+          <input type="text" id="docs-busca" placeholder="🔍 Buscar documento…" oninput="filtrarDocs()" />
         </div>
-        <div class="scroll-area">
-          <div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:12px;color:#6D4C00;line-height:1.7;">
-            ⚠️ <strong>Aviso importante:</strong> As informações geradas por inteligência artificial têm caráter <strong>orientativo e não oficial</strong>. Não substituem a consulta aos canais oficiais de informação processual, a assessoria jurídica especializada ou as autoridades competentes. Utilize este recurso apenas como ponto de partida para direcionar sua pesquisa.
-          </div>
-          <div class="fgrid" style="margin-bottom:12px;">
-            <div class="fgrp"><div class="form-label">Nome completo</div><input class="form-input" id="c-nome" readonly style="color:var(--text2);cursor:default;" /></div>
-            <div class="fgrp"><div class="form-label">CPF</div><input class="form-input" id="c-cpf" readonly style="color:var(--text2);cursor:default;" /></div>
-          </div>
-          <div class="fgrid" style="margin-bottom:12px;">
-            <div class="fgrp">
-              <div class="form-label">Tribunal</div>
-              <select class="form-select" id="c-trib">
-                <option value="trf1">TRF1 — 1ª Região (DF, MG, BA, GO, MT, PA, AM e outros)</option>
-                <option value="trf2">TRF2 — 2ª Região (RJ, ES)</option>
-                <option value="trf3">TRF3 — 3ª Região (SP, MS)</option>
-                <option value="trf4">TRF4 — 4ª Região (RS, SC, PR)</option>
-                <option value="trf5">TRF5 — 5ª Região (PE, CE, AL, SE, PB, RN)</option>
-                <option value="trf6">TRF6 — 6ª Região (MG)</option>
-                <option value="stj">STJ — Superior Tribunal de Justiça</option>
-                <option value="stf">STF — Supremo Tribunal Federal</option>
-              </select>
-            </div>
-            <div class="fgrp"><div class="form-label">Número do processo (opcional)</div><input class="form-input" id="c-num" placeholder="0000000-00.0000.0.00.0000" /></div>
-          </div>
-          <button class="btn-primary" style="max-width:200px;margin-bottom:20px;" onclick="doConsulta()">
-            <span id="c-btn-lbl">Consultar via IA</span>
-          </button>
-          <div id="c-loading" style="display:none;padding:20px 0;font-size:13px;color:var(--text2);">
-            <div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-            <span style="margin-left:8px;">Pesquisando via IA...</span>
-          </div>
-          <div id="c-result" style="display:none;">
-            <div class="fsec-title" style="margin-bottom:12px;">Resultado da consulta</div>
-            <div style="background:#FFF8E1;border:1px solid #F9A825;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6D4C00;">
-              ⚠️ Resultado gerado por IA — caráter orientativo. Confirme sempre nos portais oficiais dos tribunais.
-            </div>
-            <div id="c-result-body" style="font-size:14px;line-height:1.8;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;"></div>
-          </div>
-        </div>
+        <div class="docs-filter" id="docs-filtros"></div>
+        <div id="docs-container"><div class="loading-msg">⏳ Carregando documentos…</div></div>
       </div>
+    </div>
 
-      <!-- CADASTRO -->
-      <div class="panel" id="panel-cadastro" style="flex-direction:column;">
-        <div class="panel-header">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="#185FA5" stroke-width="1.3"/><path d="M2 13.5c0-2.485 2.686-4.5 6-4.5s6 2.015 6 4.5" stroke="#185FA5" stroke-width="1.3" stroke-linecap="round"/></svg>
-          <span class="panel-header-title">Atualização de Cadastro</span>
-        </div>
-        <div class="scroll-area">
-          <div class="fsec">
-            <div class="fsec-title">Dados funcionais</div>
-            <div class="fgrid">
-              <div class="fgrp"><div class="form-label">Matrícula SIAPE</div><input class="form-input" id="f-siape" readonly style="color:var(--text2);cursor:default;" /></div>
-              <div class="fgrp"><div class="form-label">Cargo</div><input class="form-input" id="f-cargo" placeholder="Analista / Técnico do Seguro Social" /></div>
-              <div class="fgrp full">
-                <div class="form-label" style="margin-bottom:7px;">Situação funcional</div>
-                <div class="sit-row">
-                  <button class="sit-btn on" id="sit-ativo" onclick="setSit('Ativo')">Ativo</button>
-                  <button class="sit-btn" id="sit-apos" onclick="setSit('Aposentado')">Aposentado</button>
-                  <button class="sit-btn" id="sit-pens" onclick="setSit('Pensionista')">Pensionista</button>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="fsec">
-            <div class="fsec-title">Dados pessoais</div>
-            <div class="fgrid">
-              <div class="fgrp full"><div class="form-label">Nome completo <span style="color:var(--danger-text)">*</span></div><input class="form-input" id="f-nome" oninput="validateCad()" /></div>
-              <div class="fgrp"><div class="form-label">CPF</div><input class="form-input" id="f-cpf" readonly style="color:var(--text2);cursor:default;" /></div>
-              <div class="fgrp"><div class="form-label">Telefone / WhatsApp <span style="color:var(--danger-text)">*</span></div><input class="form-input" id="f-tel" placeholder="(00) 00000-0000" oninput="validateCad()" /></div>
-              <div class="fgrp full"><div class="form-label">E-mail <span style="color:var(--danger-text)">*</span></div><input class="form-input" id="f-email" type="email" oninput="validateCad()" /></div>
-            </div>
-          </div>
-          <div class="fsec">
-            <div class="fsec-title">Endereço</div>
-            <div class="fgrid">
-              <div class="fgrp full"><div class="form-label">Endereço completo</div><input class="form-input" id="f-end" placeholder="Rua, número, complemento, bairro" /></div>
-              <div class="fgrp"><div class="form-label">Cidade</div><input class="form-input" id="f-cidade" /></div>
-              <div class="fgrp"><div class="form-label">UF</div>
-                <select class="form-select" id="f-uf">
-                  <option value="">Selecione</option>
-                  <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="form-actions">
-          <button class="btn-sec" onclick="clearCad()">Limpar</button>
-          <button class="btn-primary" id="cad-save-btn" style="max-width:220px;" onclick="saveCad()">
-            <span id="cad-btn-lbl">Salvar Cadastro</span>
-          </button>
-        </div>
-      </div>
+  </div>
+</div>
 
-      <!-- HISTÓRICO -->
-      <div class="panel" id="panel-historico">
-        <div class="panel-header">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="#185FA5" stroke-width="1.3"/><path d="M8 5v3.5l2 2" stroke="#185FA5" stroke-width="1.3" stroke-linecap="round"/></svg>
-          <span class="panel-header-title">Histórico de Interações</span>
-        </div>
-        <div class="scroll-area" id="hist-list">
-          <div class="empty">Nenhuma interação registrada ainda.</div>
-        </div>
-      </div>
+<script>
+// ═══════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════
+let STATE = {
+  associate: null,
+  chatHistory: [],
+  docsAll: [],
+  docsCategoria: 'Todos',
+  docsLoaded: false,
+};
 
-      <!-- DOCUMENTOS -->
-      <div class="panel" id="panel-documentos">
-        <div class="panel-header">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M13 3H7L5 1H3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V4a1 1 0 00-1-1z" stroke="#185FA5" stroke-width="1.3" stroke-linejoin="round"/></svg>
-          <span class="panel-header-title">Repositório de Documentos</span>
-          <span class="panel-badge online" id="doc-count" style="display:none;"></span>
-        </div>
-        <div class="scroll-area">
-          <div style="margin-bottom:14px;">
-            <input class="form-input" id="doc-search" placeholder="🔍  Buscar documento..." oninput="filterDocumentos()" style="width:100%;" />
-          </div>
-          <div id="doc-loading" style="text-align:center;padding:32px;color:var(--text2);font-size:14px;">
-            <div class="typing-dots" style="justify-content:center;margin-bottom:10px;"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
-            Carregando documentos...
-          </div>
-          <div id="doc-list" style="display:none;"></div>
-          <div id="doc-empty" style="display:none;" class="empty">Nenhum documento encontrado.</div>
-        </div>
-      </div>
+// ═══════════════════════════════════════════════
+// UTILITÁRIOS
+// ═══════════════════════════════════════════════
+function formatCPF(v) {
+  return v.replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+}
 
-    </div><!-- /main -->
-  </div><!-- /app-inner -->
-</div><!-- /app -->
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'auth-msg ' + type;
+}
 
-<script>const CTX='Você é o atendente virtual oficial da UNASLAF (Associação Nacional dos Servidores da Secretaria da Receita Previdenciária). CNPJ 73.369.795/0001-83. Sede: SCN-Qd.6-Bloco A, Ed. Venâncio 3000, 4º andar, salas 413/414, Brasília-DF. Site: https://unaslaf.org.br. Representa servidores da extinta Secretaria da Receita Previdenciária (ativos, aposentados e pensionistas).\n\nAÇÕES COLETIVAS EM ANDAMENTO:\n1. Adicional de Fronteira — Processo 1022299-41.2018.4.01.3400 (TRF1/22ª Vara SJDF). Ação para garantir adicional de fronteira (Lei 12.855/2013) aos servidores da Carreira do Seguro Social redistribuídos à RFB. Mérito pendente de julgamento.\n2. Jornada/Abono de Ponto — MS 1024043-71.2018.4.01.3400 (TRF1/2ª Vara SJDF). Mandado de Segurança contra IN nº 02/2018 do MPDG sobre jornada de trabalho.\n3. ADI 4151 — STF. VITÓRIA UNÂNIME 10x0 em abril/2026! Transforma cargos de servidores ativos, aposentados e instituidores de pensão. Marco histórico para a categoria.\n4. PASEP — Processo 0727740-19.2020.8.07.0001 — Julgado improcedente (março/2026).\n\nORIENTAÇÕES: Responda sempre em português brasileiro, linguagem clara e acolhedora. Para atualização de dados, oriente a usar "Atualizar Cadastro". Se não souber algo, indique o site unaslaf.org.br.\n\nQuando o associado pedir fichas, formulários ou documentos para download, e forem fornecidos links no contexto, apresente-os como links clicáveis com o texto do nome do arquivo.';let user={cpf:"",cpfFmt:"",name:"",phone:"",data:[],sessionToken:"",vHmac:""},vCode="",sit="Ativo",pendingFiles=[],hist=[],convHist=[],timerInt=null;function now(){return(new Date).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}function toast(e,t=""){const o=document.getElementById("toast");o.textContent=e,o.className="toast on"+(t?" "+t:""),clearTimeout(o._t),o._t=setTimeout(()=>o.classList.remove("on"),3500)}function maskCPF(e){let t=e.value.replace(/\D/g,"").slice(0,11);t=t.replace(/(\d{3})(\d)/,"$1.$2").replace(/(\d{3})\.(\d{3})(\d)/,"$1.$2.$3").replace(/(\d{3})\.(\d{3})\.(\d{3})(\d)/,"$1.$2.$3-$4"),e.value=t}function maskPhone(e){const t=(e||"").replace(/\D/g,"");return t.length<4?"****":"("+t.slice(2,4)+") *****-"+t.slice(-4)}function maskEmail(e){if(!e||!e.includes("@"))return"****";const[t,o]=e.split("@");return t.slice(0,3)+"***@"+o}function switchStep(e,t){document.getElementById(e).classList.remove("active"),document.getElementById(t).classList.add("active")}function voltarCPF(){document.querySelectorAll(".auth-step").forEach(e=>e.classList.remove("active")),document.getElementById("s-cpf").classList.add("active"),document.getElementById("in-cpf").value="",[0,1,2,3,4,5].forEach(e=>document.getElementById("c"+e).value=""),document.getElementById("err-code").style.display="none",clearInterval(timerInt)}function parseCSV(e){const t=[];for(const o of e.replace(/\r/g,"").split("\n")){if(!o.trim())continue;const e=[];let n="",a=!1;for(let t=0;t<o.length;t++){const s=o[t];'"'!==s?","!==s||a?n+=s:(e.push(n.trim()),n=""):a=!a}e.push(n.trim()),t.push(e)}return t}async function doLookup(){const e=document.getElementById("in-cpf").value.replace(/\D/g,"");if(11!==e.length)return void(document.getElementById("err-cpf").style.display="block");document.getElementById("err-cpf").style.display="none",user.cpf=e,user.cpfFmt=document.getElementById("in-cpf").value;const t=document.getElementById("btn-lookup"),o=document.getElementById("btn-lbl");t.disabled=!0,o.innerHTML='<div class="spinner"></div> Consultando cadastro...';let n=!1,a="",s="";try{const t=await fetch("/api/sheet");if(t.ok){const o=(await t.json()).rows||[];for(let t=1;t<o.length;t++){const i=o[t];if(!i||i.length<3)continue;const d=(i[2]||"").replace(/\D/g,"");if(d&&!(d.length<11)&&d===e){n=!0,a=(i[1]||"").trim(),s=(i[12]||"").replace(/\D/g,""),user.data=i;break}}}}catch(e){console.warn("sheet error:",e)}if(t.disabled=!1,o.textContent="Continuar",!n)return document.getElementById("nf-cpf").textContent=user.cpfFmt,void switchStep("s-cpf","s-notfound");user.name=a,user.phone=s?s.startsWith("55")?s:"55"+s:"",vCode=String(Math.floor(1e5+9e5*Math.random())),user.phone&&(user.vHmac=await sendWhatsApp(user.phone,`🔐 *UNASLAF — Atendente Virtual*\n\nOlá, ${a}!\n\nSeu código de verificação:\n\n*${vCode}*\n\nVálido por 10 minutos. Não compartilhe.`)),document.getElementById("masked-phone").textContent=user.phone?maskPhone(user.phone):"número não cadastrado",switchStep("s-cpf","s-code"),document.getElementById("c0").focus(),startTimer(600)}async function sendWhatsApp(e,t){try{const o=await fetch("/api/whatsapp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone:e,message:t,cpf:user.cpf,code:vCode,nome:user.name})});return(await o.json()).hmac||""}catch(e){return console.warn("whatsapp error:",e),""}}async function resendCode(){vCode=String(Math.floor(1e5+9e5*Math.random())),user.phone&&(user.vHmac=await sendWhatsApp(user.phone,`🔐 *UNASLAF*\nNovo código: *${vCode}*\nVálido 10 min.`)),startTimer(600),toast("Novo código enviado!","ok")}function startTimer(e){clearInterval(timerInt);let t=e;const o=document.getElementById("timer"),n=document.getElementById("timer-row");n.className="timer-row",timerInt=setInterval(()=>{t--,o.textContent=String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"),t<=60&&(n.className="timer-row timer-warn"),t<=0&&(clearInterval(timerInt),o.textContent="expirado")},1e3)}function codeNav(e,t){e.value=e.value.replace(/\D/g,""),e.value&&t<5&&document.getElementById("c"+(t+1)).focus(),6===[0,1,2,3,4,5].map(e=>document.getElementById("c"+e).value).join("").length&&setTimeout(verifyCode,80)}function codeBack(e,t){"Backspace"===e.key&&!document.getElementById("c"+t).value&&t>0&&document.getElementById("c"+(t-1)).focus()}async function verifyCode(){const e=[0,1,2,3,4,5].map(e=>document.getElementById("c"+e).value).join("");if(!(e.length<6))try{const t=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cpf:user.cpf,code:e,hmac:user.vHmac||"",nome:user.name})}),o=await t.json();t.ok&&o.token?(user.sessionToken=o.token,clearInterval(timerInt),loginSuccess()):(document.getElementById("err-code").style.display="block",[0,1,2,3,4,5].forEach(e=>document.getElementById("c"+e).value=""),document.getElementById("c0").focus(),setTimeout(()=>document.getElementById("err-code").style.display="none",3e3))}catch(e){console.warn("auth error:",e),document.getElementById("err-code").style.display="block",[0,1,2,3,4,5].forEach(e=>document.getElementById("c"+e).value=""),document.getElementById("c0").focus()}}function loginSuccess(){const e=user.name.split(" ")[0]||"Associado";document.getElementById("top-name").textContent=e,document.getElementById("top-cpf").textContent=user.cpfFmt,document.getElementById("f-cpf").value=user.cpfFmt,document.getElementById("f-nome").value=user.data[1]||"",document.getElementById("f-siape").value=user.data[0]||"",document.getElementById("f-cargo").value=user.data[44]||"",document.getElementById("f-tel").value=user.data[12]||"",document.getElementById("f-email").value=user.data[10]||"",document.getElementById("f-end").value=user.data[15]||"",document.getElementById("f-cidade").value=user.data[19]||"";const t=user.data[21]||"";document.getElementById("f-uf").value=t.toUpperCase(),setSit(user.data[22]||"Ativo"),document.getElementById("c-cpf").value=user.cpfFmt,document.getElementById("c-nome").value=user.data[1]||"",document.getElementById("auth-screen").style.display="none",document.getElementById("app").style.display="flex",initCadValidation(),addBotMsg(`Olá, ${e}! Identidade verificada com sucesso ✓\n\nSou o atendente virtual da Unaslaf. Estou aqui para ajudar com informações sobre a associação, consultas processuais, atualização de cadastro e envio de documentos.\n\nComo posso ajudar você hoje?`),addHist("chat","Sessão autenticada — "+user.cpfFmt)}function showPanel(e,t){document.querySelectorAll(".panel").forEach(e=>e.classList.remove("active")),document.querySelectorAll(".nav-btn").forEach(e=>e.classList.remove("active")),document.getElementById("panel-"+e).classList.add("active"),t&&t.classList.add("active")}function addBotMsg(e){const t=document.getElementById("chat-msgs"),o=document.createElement("div");o.className="msg",o.innerHTML=`<div class="msg-av bot">U</div><div><div class="msg-bubble bot" style="white-space:pre-wrap;">${e}</div><div class="msg-time">${now()}</div></div>`,t.appendChild(o),t.scrollTop=t.scrollHeight}function addBotMsgHtml(e){const t=document.getElementById("chat-msgs"),o=document.createElement("div");o.className="msg";const n=e.replace(/\n/g,"<br>");o.innerHTML=`<div class="msg-av bot">U</div><div><div class="msg-bubble bot">${n}</div><div class="msg-time">${now()}</div></div>`,t.appendChild(o),t.scrollTop=t.scrollHeight}function addUserMsg(e){const t=document.getElementById("chat-msgs"),o=document.createElement("div");o.className="msg user",o.innerHTML=`<div class="msg-av usr">A</div><div><div class="msg-bubble usr">${e}</div><div class="msg-time r">${now()}</div></div>`,t.appendChild(o),t.scrollTop=t.scrollHeight}function showTyping(){const e=document.getElementById("chat-msgs"),t=document.createElement("div");t.className="msg",t.id="typing",t.innerHTML='<div class="msg-av bot">U</div><div class="msg-bubble bot"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>',e.appendChild(t),e.scrollTop=e.scrollHeight}function hideTyping(){const e=document.getElementById("typing");e&&e.remove()}const DOCUMENTO_REGEX=/ficha|formulário|formulario|modelo|procuração|procuracao|filia|desfilia|requerimento|solicit|baixar|download|documento/i;let repoFiles=[];async function getRepoFiles(){if(repoFiles.length)return repoFiles;try{const e=await fetch("/api/repositorio"),t=await e.json();repoFiles=t.files||[]}catch(e){repoFiles=[]}return repoFiles}function findRelevantFiles(e,t){const o=t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");return e.filter(e=>{const t=e.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,""),n=(e.categoria||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");return o.split(/\s+/).filter(e=>e.length>3).some(e=>t.includes(e)||n.includes(e))})}async function sendMsg(){const e=document.getElementById("chat-in"),t=e.value.trim();if(!t)return;e.value="",addUserMsg(t),document.getElementById("chips-area").style.display="none",convHist.push({role:"user",content:t}),showTyping();let o="";if(DOCUMENTO_REGEX.test(t)){const e=await getRepoFiles(),n=findRelevantFiles(e,t);n.length>0?o="\n\nDOCUMENTOS DISPONÍVEIS PARA DOWNLOAD (inclua estes links na resposta):\n"+n.map(e=>`• ${e.icon} [${e.name}](https://unaslaf-app.vercel.app${e.downloadUrl}) — ${e.size}`).join("\n"):e.length>0&&(o="\n\nDOCUMENTOS DISPONÍVEIS NO REPOSITÓRIO:\n"+e.map(e=>`• ${e.icon} [${e.name}](https://unaslaf-app.vercel.app${e.downloadUrl})`).join("\n")+"\n\nSe o documento solicitado estiver na lista acima, apresente o link para download.")}try{const e=o?t+o:t,n=[...convHist.slice(0,-1),{role:"user",content:e}],a=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${user.sessionToken}`},body:JSON.stringify({system:CTX,messages:n,userName:user.name,userCpf:user.cpfFmt,baseUrl:window.location.origin,sessionToken:user.sessionToken})}),s=await a.json();if(hideTyping(),401===a.status)return voltarCPF(),void toast("Sessão expirada. Faça login novamente.","err");const i=s.content?.[0]?.text||s.error||"Não foi possível obter resposta.";addBotMsgHtml(i.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g,'<a href="$2" target="_blank" style="color:var(--blue);font-weight:500;text-decoration:underline;">$1</a>')),convHist.push({role:"assistant",content:i}),addHist("chat",t.slice(0,70))}catch(e){hideTyping(),addBotMsg("Erro ao conectar com o servidor. Tente novamente.")}}function chip(e){document.getElementById("chat-in").value=e,sendMsg()}function chatFile(e){if(!e.files.length)return;const t=e.files[0];addUserMsg(`📎 ${t.name}`),addBotMsg(`Recebi o arquivo "${t.name}". Para enviá-lo formalmente à UNASLAF, entre em contato pelo site unaslaf.org.br.`),addHist("arq",t.name)}function setSit(e){sit=e,["Ativo","Aposentado","Pensionista"].forEach(t=>{const o="sit-"+t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").slice(0,4);document.getElementById(o)?.classList.toggle("on",t===e)}),document.getElementById("sit-ativo").classList.toggle("on","Ativo"===e),document.getElementById("sit-apos").classList.toggle("on","Aposentado"===e),document.getElementById("sit-pens").classList.toggle("on","Pensionista"===e)}function validateCad(){const e=[{id:"f-nome",val:document.getElementById("f-nome")?.value.trim()},{id:"f-email",val:document.getElementById("f-email")?.value.trim()},{id:"f-tel",val:document.getElementById("f-tel")?.value.trim()}];let t=!0;e.forEach(({id:e,val:o})=>{const n=document.getElementById(e);n&&(o?(n.style.background="",n.style.borderColor=""):(n.style.background="#FFEBEE",n.style.borderColor="#E57373",t=!1))});const o=document.getElementById("cad-save-btn");o&&(o.disabled=!t,o.style.opacity=t?"1":"0.5",o.style.cursor=t?"pointer":"not-allowed")}function initCadValidation(){["f-nome","f-email","f-tel"].forEach(e=>{document.getElementById(e)?.addEventListener("input",validateCad)}),validateCad()}async function saveCad(){const e=document.getElementById("f-nome").value.trim(),t=document.getElementById("f-cpf").value.trim(),o=document.getElementById("f-email").value.trim(),n=document.getElementById("f-tel").value.trim();if(!(e&&t&&o&&n))return void toast("Preencha os campos obrigatórios: Nome, E-mail e Telefone","err");const a=document.getElementById("cad-btn-lbl");a.innerHTML='<div class="spinner"></div> Salvando...';const s=[user.data[0]||"",e,t,o,n,document.getElementById("f-end").value.trim(),document.getElementById("f-cidade").value.trim(),document.getElementById("f-uf").value,sit,document.getElementById("f-cargo").value.trim()];try{const t=await fetch("/api/cadastro",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${user.sessionToken}`},body:JSON.stringify({row:s,alteradoPor:"Usuário",sessionToken:user.sessionToken})}),o=await t.json();if(a.textContent="Salvar Cadastro",401===t.status)return voltarCPF(),void toast("Sessão expirada. Faça login novamente.","err");if(o.success){const t="atualizado"===o.action?"Cadastro atualizado":"Cadastro inserido";toast(`${t} com sucesso!`,"ok"),addHist("cad",`${t}: ${e}`)}else toast("Erro ao salvar: "+(o.error||"tente novamente"),"err")}catch(e){a.textContent="Salvar Cadastro",toast("Erro ao conectar com o servidor","err"),console.error(e)}}function clearCad(){["f-siape","f-cargo","f-tel","f-email","f-end","f-cidade"].forEach(e=>{const t=document.getElementById(e);t&&(t.value="")}),document.getElementById("f-uf").value="",setSit("Ativo")}function addFiles(e){for(const t of e.files)pendingFiles.push(t);renderFiles()}function renderFiles(){const e=document.getElementById("file-list");pendingFiles.length?e.innerHTML=pendingFiles.map((e,t)=>`\n    <div class="file-row" id="file-row-${t}">\n      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M9 1.5H3.5A1.5 1.5 0 002 3v10a1.5 1.5 0 001.5 1.5h9A1.5 1.5 0 0014 13V6l-5-4.5z" stroke="#185FA5" stroke-width="1.2"/></svg>\n      <span class="file-name">${e.name}</span>\n      <span class="file-size">${(e.size/1024).toFixed(0)} KB</span>\n      <span class="file-tag" id="file-tag-${t}">Pronto</span>\n    </div>`).join(""):e.innerHTML='<div class="empty">Nenhum arquivo selecionado</div>'}async function uploadDrive(){if(!pendingFiles.length)return void toast("Selecione ao menos um arquivo","err");const e=document.getElementById("f-desc").value||"sem descrição",t=new FormData;pendingFiles.forEach((o,n)=>{const a=(new Date).toISOString().slice(0,10),s=o.name.split(".").pop(),i=`${user.cpf}_${a}_${e.slice(0,20).replace(/\s+/g,"_")}_${n+1}.${s}`;t.append("files",o,i);const d=document.getElementById("file-tag-"+n);d&&(d.textContent="Enviando...",d.style.background="var(--warn-bg)",d.style.color="var(--warn-text)")}),toast(`Enviando ${pendingFiles.length} arquivo(s) ao Drive...`);try{const e=await fetch("/api/upload",{method:"POST",body:t}),o=await e.json();o.success?(toast(`${o.uploaded.length} arquivo(s) enviado(s) com sucesso!`,"ok"),o.uploaded.forEach((e,t)=>{const o=document.getElementById("file-tag-"+t);o&&(o.textContent="Enviado ✓",o.style.background="var(--green-bg)",o.style.color="var(--green-text)"),addHist("arq",e.filename)}),setTimeout(()=>{pendingFiles=[],renderFiles(),document.getElementById("f-desc").value=""},2e3)):toast("Erro ao enviar: "+(o.error||"tente novamente"),"err")}catch(e){toast("Erro ao conectar com o servidor","err"),console.error(e)}}async function doConsulta(){const e=document.getElementById("c-nome").value,t=document.getElementById("c-cpf").value,o=document.getElementById("c-num").value,n=document.getElementById("c-trib").value;if(!e&&!o)return void toast("Nome do associado não identificado","err");document.getElementById("c-loading").style.display="flex",document.getElementById("c-result").style.display="none";const a=document.getElementById("c-btn-lbl");a.innerHTML='<div class="spinner"></div>';const s={trf1:{nome:"TRF1 — 1ª Região",url:"https://processual.trf1.jus.br/consultaProcessual/processo.php"},trf2:{nome:"TRF2 — 2ª Região",url:"https://portal.trf2.jus.br/portal/consulta/cons_proc.asp"},trf3:{nome:"TRF3 — 3ª Região",url:"https://web.trf3.jus.br/base-textual"},trf4:{nome:"TRF4 — 4ª Região",url:"https://www.trf4.jus.br/trf4/processos/acompanhamento/consulta_processual.php"},trf5:{nome:"TRF5 — 5ª Região",url:"https://www.trf5.jus.br"},trf6:{nome:"TRF6 — 6ª Região",url:"https://www.trf6.jus.br"},stj:{nome:"STJ",url:"https://processo.stj.jus.br/processo/pesquisa/"},stf:{nome:"STF",url:"https://portal.stf.jus.br/processos/"}},i=s[n]||s.trf1;let d=null;try{const a=await fetch("/api/consulta",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({cpf:t.replace(/\D/g,""),nome:e,tribunal:n,numProcesso:o||""})});a.ok&&(d=await a.json())}catch(e){console.warn("Consulta portal falhou:",e.message)}const c=d?.resumo?`\nRESULTADO DA CONSULTA REAL NO PORTAL DO ${i.nome}:\n${d.resumo}\nURL consultada: ${d.portalUrl}`:`\nNota: não foi possível consultar o portal do ${i.nome} diretamente (pode exigir autenticação ou CAPTCHA). Oriente o associado a acessar ${i.url} manualmente.`,r=`Você é um assistente jurídico especializado em processos da Justiça Federal brasileira.\n\nASSOCIADO AUTENTICADO:\n- Nome: ${e}\n- CPF: ${t}\n- Processo nº: ${o||"não informado"}\n- Tribunal: ${i.nome}\n${c}\n\nCONTEXTO UNASLAF — Ações coletivas:\n1. Adicional de Fronteira — 1022299-41.2018.4.01.3400 (TRF1) — mérito pendente\n2. Jornada/Abono de Ponto — MS 1024043-71.2018.4.01.3400 (TRF1)\n3. ADI 4151 — STF — VITÓRIA UNÂNIME 10x0 em abril/2026\n4. PASEP — 0727740-19.2020.8.07.0001 — improcedente (março/2026)\n\nResponda OBRIGATORIAMENTE começando com:\n"⚠️ Aviso: As informações fornecidas têm caráter orientativo e não oficial. Não substituem a consulta aos canais oficiais, a assessoria jurídica especializada ou as autoridades competentes."\n\nDepois responda em 3 blocos:\n1) Resultado da consulta: interprete os dados reais obtidos no portal (se houver) e como o perfil do associado se relaciona com as ações coletivas da UNASLAF\n2) Como consultar pessoalmente em: ${i.url} — informe o passo a passo para buscar pelo CPF e pelo CNPJ da UNASLAF (73.369.795/0001-83)\n3) Próximos passos — oriente a buscar o jurídico da UNASLAF para análise individual em unaslaf.org.br`;try{const t=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:CTX,messages:[{role:"user",content:r}],userName:user.name,userCpf:user.cpfFmt,baseUrl:window.location.origin})}),o=await t.json();document.getElementById("c-loading").style.display="none",a.textContent="Consultar via IA",document.getElementById("c-result").style.display="block",document.getElementById("c-result-body").innerHTML=(o.content?.[0]?.text||"Sem resultado.").replace(/\n/g,"<br>"),addHist("cons","Consulta "+i.nome+": "+e)}catch(e){document.getElementById("c-loading").style.display="none",a.textContent="Consultar via IA",toast("Erro na consulta. Tente novamente.","err")}}function addHist(e,t){hist.unshift({type:e,text:t,date:now()});const o={chat:"Chat",cad:"Cadastro",arq:"Arquivo",cons:"Consulta"};document.getElementById("hist-list").innerHTML=hist.map(e=>`<div class="hist-row"><div class="hist-head"><span class="hist-tag ${e.type}">${o[e.type]}</span><span class="hist-date">${e.date}</span></div><div class="hist-prev">${e.text}</div></div>`).join("")}let todosDocumentos=[];async function loadDocumentos(){if(todosDocumentos.length>0)renderDocumentos(todosDocumentos);else{document.getElementById("doc-loading").style.display="block",document.getElementById("doc-list").style.display="none",document.getElementById("doc-empty").style.display="none";try{const e=await fetch("/api/repositorio"),t=await e.json();if(t.success&&t.files.length>0){todosDocumentos=t.files;const e=document.getElementById("doc-count");e.textContent=`${t.total} arquivo${1!==t.total?"s":""}`,e.style.display="inline-block",renderDocumentos(todosDocumentos)}else document.getElementById("doc-loading").style.display="none",document.getElementById("doc-empty").style.display="block",document.getElementById("doc-empty").textContent="Nenhum documento disponível ainda."}catch(e){document.getElementById("doc-loading").style.display="none",document.getElementById("doc-empty").style.display="block",document.getElementById("doc-empty").textContent="Erro ao carregar documentos. Tente novamente."}}}function filterDocumentos(){const e=document.getElementById("doc-search").value.toLowerCase().trim();renderDocumentos(e?todosDocumentos.filter(t=>t.name.toLowerCase().includes(e)||t.categoria.toLowerCase().includes(e)):todosDocumentos)}function renderDocumentos(e){if(document.getElementById("doc-loading").style.display="none",!e.length)return document.getElementById("doc-list").style.display="none",document.getElementById("doc-empty").style.display="block",void(document.getElementById("doc-empty").textContent="Nenhum documento encontrado.");document.getElementById("doc-empty").style.display="none",document.getElementById("doc-list").style.display="block";const t={};e.forEach(e=>{t[e.categoria]||(t[e.categoria]=[]),t[e.categoria].push(e)}),document.getElementById("doc-list").innerHTML=Object.entries(t).map(([e,t])=>`\n    <div class="doc-categoria">${e}</div>\n    ${t.map(e=>`\n      <div class="doc-card">\n        <div class="doc-icon">${e.icon}</div>\n        <div class="doc-info">\n          <div class="doc-name" title="${e.name}">${e.name}</div>\n          <div class="doc-meta">${e.size} &nbsp;·&nbsp; Atualizado em ${e.modified}</div>\n        </div>\n        <a class="doc-download" href="${e.downloadUrl}" download="${e.name}">\n          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v8M5 7l3 3 3-3M3 13h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>\n          Baixar\n        </a>\n      </div>`).join("")}\n  `).join("")}</script>
+function setLoading(btnId, loading, defaultText) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.textContent = loading ? '⏳ Aguarde…' : defaultText;
+}
+
+// ═══════════════════════════════════════════════
+// AUTENTICAÇÃO — CPF
+// ═══════════════════════════════════════════════
+document.getElementById('input-cpf').addEventListener('input', function () {
+  this.value = formatCPF(this.value);
+});
+
+async function enviarCPF() {
+  const cpf = document.getElementById('input-cpf').value.replace(/\D/g, '');
+  if (cpf.length !== 11) {
+    return showMsg('msg-cpf', 'Informe um CPF válido com 11 dígitos.', 'error');
+  }
+
+  setLoading('btn-enviar-cpf', true, 'Continuar');
+  document.getElementById('msg-cpf').className = 'auth-msg';
+
+  try {
+    const res = await fetch('/api/auth-send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cpf })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('msg-cpf', data.message || data.error || 'Erro ao verificar CPF.', 'error');
+      setLoading('btn-enviar-cpf', false, 'Continuar');
+      return;
+    }
+
+    // Vai para etapa 2
+    document.getElementById('step-cpf').style.display = 'none';
+    document.getElementById('step-code').style.display = 'block';
+    document.getElementById('code-title').textContent = `Olá, ${data.nome}!`;
+    document.getElementById('code-subtitle').textContent = data.message;
+    document.getElementById('input-code').focus();
+    window._cpfAtual = cpf;
+
+  } catch (err) {
+    showMsg('msg-cpf', 'Erro de conexão. Tente novamente.', 'error');
+  }
+  setLoading('btn-enviar-cpf', false, 'Continuar');
+}
+
+function voltarCPF() {
+  document.getElementById('step-code').style.display = 'none';
+  document.getElementById('step-cpf').style.display = 'block';
+  document.getElementById('input-code').value = '';
+  document.getElementById('msg-code').className = 'auth-msg';
+}
+
+// ═══════════════════════════════════════════════
+// AUTENTICAÇÃO — CÓDIGO
+// ═══════════════════════════════════════════════
+document.getElementById('input-code').addEventListener('input', function () {
+  this.value = this.value.replace(/\D/g, '').slice(0, 6);
+});
+document.getElementById('input-code').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') verificarCodigo();
+});
+
+async function verificarCodigo() {
+  const code = document.getElementById('input-code').value.trim();
+  if (code.length !== 6) {
+    return showMsg('msg-code', 'Digite os 6 dígitos do código.', 'error');
+  }
+
+  setLoading('btn-verificar', true, 'Entrar');
+  document.getElementById('msg-code').className = 'auth-msg';
+
+  try {
+    const res = await fetch('/api/auth-verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cpf: window._cpfAtual, code })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('msg-code', data.error || 'Código inválido.', 'error');
+      setLoading('btn-verificar', false, 'Entrar');
+      return;
+    }
+
+    // Login bem-sucedido
+    STATE.associate = data.associate;
+    iniciarApp();
+
+  } catch (err) {
+    showMsg('msg-code', 'Erro de conexão. Tente novamente.', 'error');
+  }
+  setLoading('btn-verificar', false, 'Entrar');
+}
+
+// ═══════════════════════════════════════════════
+// INICIAR APP
+// ═══════════════════════════════════════════════
+function iniciarApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'flex';
+
+  const primeiroNome = (STATE.associate.nome || '').split(' ')[0];
+  document.getElementById('topbar-nome').textContent = primeiroNome;
+
+  preencherCadastro();
+}
+
+function sair() {
+  if (!confirm('Deseja realmente sair?')) return;
+  STATE = { associate: null, chatHistory: [], docsAll: [], docsCategoria: 'Todos', docsLoaded: false };
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('input-cpf').value = '';
+  document.getElementById('input-code').value = '';
+  document.getElementById('step-cpf').style.display = 'block';
+  document.getElementById('step-code').style.display = 'none';
+  document.getElementById('msg-cpf').className = 'auth-msg';
+  document.getElementById('chat-messages').innerHTML = `
+    <div class="welcome-msg">
+      Olá! Sou o Atendente Virtual da <strong>UNASLAF</strong>. Posso responder dúvidas sobre ações coletivas, ADI 4151, estatuto, filiação e muito mais.<br><br>
+      Como posso ajudar você hoje?
+    </div>`;
+  STATE.chatHistory = [];
+}
+
+// ═══════════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════════
+function showTab(tabId) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.tab === tabId));
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.toggle('active', el.id === 'tab-' + tabId));
+
+  if (tabId === 'documentos' && !STATE.docsLoaded) carregarDocumentos();
+}
+
+// ═══════════════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════════════
+function addMsg(text, role) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  // Formata negrito simples
+  div.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function setTyping(show) {
+  const el = document.getElementById('chat-typing');
+  el.style.display = show ? 'flex' : 'none';
+  if (show) {
+    const container = document.getElementById('chat-messages');
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text  = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  document.getElementById('btn-send').disabled = true;
+
+  addMsg(text, 'user');
+  STATE.chatHistory.push({ role: 'user', content: text });
+  setTyping(true);
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message:   text,
+        history:   STATE.chatHistory.slice(-10),
+        associate: STATE.associate
+      })
+    });
+    const data = await res.json();
+    setTyping(false);
+
+    const reply = data.reply || 'Não foi possível obter resposta.';
+    addMsg(reply, 'bot');
+    STATE.chatHistory.push({ role: 'assistant', content: reply });
+
+  } catch (err) {
+    setTyping(false);
+    addMsg('❌ Erro de conexão. Tente novamente em instantes.', 'bot');
+  }
+
+  document.getElementById('btn-send').disabled = false;
+  document.getElementById('chat-input').focus();
+}
+
+function sendChip(text) {
+  document.getElementById('chat-input').value = text;
+  sendMessage();
+}
+
+// ═══════════════════════════════════════════════
+// CADASTRO
+// ═══════════════════════════════════════════════
+function preencherCadastro() {
+  const a = STATE.associate;
+  document.getElementById('cad-nome').value     = a.nome     || '';
+  document.getElementById('cad-cpf').value      = a.cpf      || '';
+  document.getElementById('cad-siape').value    = a.siape    || '';
+  document.getElementById('cad-email').value    = a.email    || '';
+  document.getElementById('cad-telefone').value = a.telefone || '';
+  document.getElementById('cad-endereco').value = a.endereco || '';
+  document.getElementById('cad-cidade').value   = a.cidade   || '';
+  document.getElementById('cad-uf').value       = a.uf       || '';
+  verificarBotaoSalvar();
+}
+
+['cad-nome', 'cad-email', 'cad-telefone'].forEach(id => {
+  document.getElementById(id).addEventListener('input', verificarBotaoSalvar);
+});
+
+function verificarBotaoSalvar() {
+  const nome     = document.getElementById('cad-nome').value.trim();
+  const email    = document.getElementById('cad-email').value.trim();
+  const telefone = document.getElementById('cad-telefone').value.trim();
+
+  ['cad-nome', 'cad-email', 'cad-telefone'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.toggle('required-empty', !el.value.trim());
+  });
+
+  document.getElementById('btn-salvar').disabled = !(nome && email && telefone);
+}
+
+async function salvarCadastro() {
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Salvando…';
+  document.getElementById('save-msg').className = 'save-msg';
+
+  const payload = {
+    cpf:      STATE.associate.cpf,
+    rowIndex: STATE.associate.rowIndex,
+    nome:     document.getElementById('cad-nome').value.trim(),
+    email:    document.getElementById('cad-email').value.trim(),
+    telefone: document.getElementById('cad-telefone').value.trim(),
+    endereco: document.getElementById('cad-endereco').value.trim(),
+    cidade:   document.getElementById('cad-cidade').value.trim(),
+    uf:       document.getElementById('cad-uf').value.trim().toUpperCase(),
+  };
+
+  try {
+    const res  = await fetch('/api/cadastro', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      const msgEl = document.getElementById('save-msg');
+      msgEl.textContent = '✅ Cadastro atualizado com sucesso!';
+      msgEl.className = 'save-msg success';
+      // Atualiza estado local
+      STATE.associate = { ...STATE.associate, ...payload };
+      document.getElementById('topbar-nome').textContent = payload.nome.split(' ')[0];
+    } else {
+      const msgEl = document.getElementById('save-msg');
+      msgEl.textContent = '❌ ' + (data.error || 'Erro ao salvar.');
+      msgEl.className = 'save-msg error';
+    }
+  } catch (err) {
+    const msgEl = document.getElementById('save-msg');
+    msgEl.textContent = '❌ Erro de conexão. Tente novamente.';
+    msgEl.className = 'save-msg error';
+  }
+
+  btn.textContent = '💾 Salvar Cadastro';
+  verificarBotaoSalvar();
+}
+
+// ═══════════════════════════════════════════════
+// DOCUMENTOS
+// ═══════════════════════════════════════════════
+async function carregarDocumentos() {
+  STATE.docsLoaded = true;
+  try {
+    const res  = await fetch('/api/documentos');
+    const data = await res.json();
+    STATE.docsAll = data.files || [];
+    renderFiltros();
+    renderDocs();
+  } catch (err) {
+    document.getElementById('docs-container').innerHTML =
+      '<div class="docs-empty">❌ Não foi possível carregar os documentos. Tente novamente.</div>';
+  }
+}
+
+function renderFiltros() {
+  const cats = ['Todos', ...new Set(STATE.docsAll.map(d => d.categoria))];
+  const container = document.getElementById('docs-filtros');
+  container.innerHTML = cats.map(c => `
+    <button class="filter-btn ${c === STATE.docsCategoria ? 'active' : ''}"
+      onclick="setCat('${c}')">${c}</button>
+  `).join('');
+}
+
+function setCat(cat) {
+  STATE.docsCategoria = cat;
+  renderFiltros();
+  renderDocs();
+}
+
+function filtrarDocs() { renderDocs(); }
+
+function getFileIcon(tipo) {
+  if (tipo.includes('pdf')) return '📄';
+  if (tipo.includes('word') || tipo.includes('document')) return '📝';
+  if (tipo.includes('sheet') || tipo.includes('spreadsheet')) return '📊';
+  if (tipo.includes('presentation') || tipo.includes('powerpoint')) return '📊';
+  if (tipo.includes('image')) return '🖼️';
+  return '📎';
+}
+
+function renderDocs() {
+  const busca = document.getElementById('docs-busca').value.toLowerCase();
+  const lista = STATE.docsAll.filter(d => {
+    const catOk = STATE.docsCategoria === 'Todos' || d.categoria === STATE.docsCategoria;
+    const buscaOk = !busca || d.nome.toLowerCase().includes(busca);
+    return catOk && buscaOk;
+  });
+
+  const container = document.getElementById('docs-container');
+  if (!lista.length) {
+    container.innerHTML = '<div class="docs-empty">📭 Nenhum documento encontrado.</div>';
+    return;
+  }
+
+  container.innerHTML = `<div class="docs-grid">${lista.map(d => `
+    <div class="doc-card">
+      <div class="doc-icon">${getFileIcon(d.tipo)}</div>
+      <div class="doc-nome">${d.nome}</div>
+      <div class="doc-meta">📅 ${d.modificado} &nbsp;|&nbsp; 💾 ${d.tamanho}</div>
+      <span class="doc-cat">${d.categoria}</span>
+      <a class="btn-baixar" href="${d.downloadUrl}" download>⬇️ Baixar</a>
+    </div>
+  `).join('')}</div>`;
+}
+
+// Validação CPF também por Enter
+document.getElementById('input-cpf').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') enviarCPF();
+});
+</script>
 </body>
 </html>
