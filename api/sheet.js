@@ -1,5 +1,6 @@
-// Lê a planilha diretamente via Google Sheets API (sem cache)
-// Substitui a URL CSV pública que tem cache de até 5 minutos no Google
+// Lê a planilha via Google Sheets API e retorna JSON estruturado
+// Retorna JSON em vez de CSV para preservar campos vazios corretamente
+// (CSV desalinha colunas quando há campos vazios no meio da linha)
 
 import { checkRateLimit } from '../lib/_security.js';
 
@@ -55,7 +56,7 @@ export default async function handler(req, res) {
     const sheetId     = process.env.SHEETS_ID;
     const token       = await getAccessToken(credentials);
 
-    // Lê a aba consolidado_app da planilha App_Cadastro Oficial_Unaslaf
+    // Lê a aba consolidado_app
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/consolidado_app?majorDimension=ROWS`;
     const sheetsRes = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
@@ -66,23 +67,27 @@ export default async function handler(req, res) {
       return res.status(sheetsRes.status).json({ error: err.error?.message || 'Sheets API error' });
     }
 
-    const data   = await sheetsRes.json();
-    const rows   = data.values || [];
+    const data = await sheetsRes.json();
+    const rawRows = data.values || [];
 
-    // Converte para CSV para manter compatibilidade com o parser do frontend
-    const csv = rows.map(row =>
-      row.map(cell => {
-        // Escapa células com vírgula ou aspas
-        const str = String(cell || '');
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      }).join(',')
-    ).join('\n');
+    if (rawRows.length === 0) {
+      return res.status(200).json({ rows: [] });
+    }
 
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    return res.status(200).send(csv);
+    // Determina o número total de colunas pelo cabeçalho (primeira linha)
+    const numCols = rawRows[0].length;
+
+    // Normaliza TODAS as linhas para terem exatamente numCols colunas
+    // A Sheets API omite células vazias no final — isso corrige o desalinhamento
+    const rows = rawRows.map(row => {
+      const normalized = [...row];
+      while (normalized.length < numCols) normalized.push('');
+      return normalized;
+    });
+
+    // Retorna JSON estruturado — preserva campos vazios corretamente
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    return res.status(200).json({ rows });
 
   } catch (err) {
     console.error('Sheet error:', err.message);
