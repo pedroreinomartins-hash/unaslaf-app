@@ -49,8 +49,8 @@ export default async function handler(req, res) {
     const sheetId     = process.env.SHEETS_ID;
     const token       = await getAccessToken(credentials);
 
-    // Lê a aba Sheet1 da nova planilha ROLDEASSOCIADOS_APP_CONSOLIDADO
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1?majorDimension=ROWS`;
+    // Lê a aba consolidado_app da planilha App_Cadastro Oficial_Unaslaf
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/consolidado_app?majorDimension=ROWS`;
     const sheetsRes = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -63,10 +63,18 @@ export default async function handler(req, res) {
     const data   = await sheetsRes.json();
     const rows   = data.values || [];
 
-    // Converte para CSV para manter compatibilidade com o parser do frontend
-    const csv = rows.map(row =>
+    // Normaliza todas as linhas para o mesmo número de colunas
+    // A Sheets API omite células vazias no final — sem normalizar, índices ficam errados
+    const numCols = rows[0]?.length || 0;
+    const normalized = rows.map(row => {
+      const r = [...row];
+      while (r.length < numCols) r.push('');
+      return r;
+    });
+
+    // Converte para CSV
+    const csv = normalized.map(row =>
       row.map(cell => {
-        // Escapa células com vírgula ou aspas
         const str = String(cell || '');
         if (str.includes(',') || str.includes('"') || str.includes('\n')) {
           return `"${str.replace(/"/g, '""')}"`;
