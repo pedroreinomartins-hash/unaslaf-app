@@ -4,50 +4,79 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const instance    = process.env.ZAPI_INSTANCE;
-  const token       = process.env.ZAPI_TOKEN;
-  const clientToken = process.env.ZAPI_CLIENT_TOKEN;
+  const results = {};
 
-  // Mostra o que o Vercel está lendo das variáveis (sem expor valores completos)
-  const debug = {
-    ZAPI_INSTANCE:     instance    ? `OK (${instance.slice(0,6)}...)` : 'NÃO DEFINIDO',
-    ZAPI_TOKEN:        token       ? `OK (${token.slice(0,6)}...)` : 'NÃO DEFINIDO',
-    ZAPI_CLIENT_TOKEN: clientToken ? `OK (${clientToken.slice(0,6)}...)` : 'NÃO DEFINIDO',
-  };
+  // 1. Verifica variáveis
+  const sheetsId   = process.env.SHEETS_ID;
+  const serviceAcc = process.env.GOOGLE_SERVICE_ACCOUNT;
 
-  if (req.method === 'GET') {
-    return res.status(200).json({ status: 'variáveis carregadas', debug });
-  }
-
-  // POST: tenta enviar mensagem de teste
-  const phone   = req.body?.phone || '5519991899977';
-  const message = '🔧 Teste de diagnóstico UNASLAF';
+  results.SHEETS_ID = sheetsId ? `OK = ${sheetsId}` : 'NÃO DEFINIDO';
+  results.GOOGLE_SERVICE_ACCOUNT = serviceAcc ? `OK (${serviceAcc.length} chars)` : 'NÃO DEFINIDO';
 
   try {
-    const url = `https://api.z-api.io/instances/${instance}/token/${token}/send-text`;
-    console.log('Chamando Z-API:', url);
-    console.log('client-token:', clientToken ? clientToken.slice(0,8)+'...' : 'VAZIO');
+    if (!sheetsId || !serviceAcc) throw new Error('Variáveis não definidas');
 
-    const response = await fetch(url, {
+    const credentials = JSON.parse(serviceAcc);
+    results.service_account = credentials.client_email;
+
+    // Gera token
+    const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+    const now    = Math.floor(Date.now() / 1000);
+    const claim  = Buffer.from(JSON.stringify({
+      iss: credentials.client_email,
+      scope: 'https://www.googleapis.com/auth/spreadsheets.readonly',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: now + 3600, iat: now,
+    })).toString('base64url');
+    const signingInput = `${header}.${claim}`;
+    const pemKey  = credentials.private_key.replace(/\\n/g, '\n');
+    const pemBody = pemKey.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g, '');
+    const binaryKey = Buffer.from(pemBody, 'base64');
+    const cryptoKey = await crypto.subtle.importKey('pkcs8', binaryKey, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+    const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', cryptoKey, Buffer.from(signingInput));
+    const jwt = `${signingInput}.${Buffer.from(signature).toString('base64url')}`;
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'client-token': clientToken || '',
-      },
-      body: JSON.stringify({ phone, message }),
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
     });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) throw new Error('Token falhou: ' + JSON.stringify(tokenData));
+    results.token = 'OK';
 
-    const data = await response.json();
-    console.log('Z-API retornou:', response.status, JSON.stringify(data));
+    // Testa leitura da aba consolidado_app
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetsId}/values/consolidado_app?majorDimension=ROWS`;
+    const sheetsRes = await fetch(url, { headers: { Authorization: `Bearer ${tokenData.access_token}` } });
+    const sheetsData = await sheetsRes.json();
 
-    return res.status(200).json({
-      debug,
-      zapi_status: response.status,
-      zapi_response: data,
-    });
+    if (!sheetsRes.ok) {
+      results.sheets = `ERRO ${sheetsRes.status}: ${sheetsData.error?.message}`;
+    } else {
+      const rows = sheetsData.values || [];
+      results.sheets_linhas = rows.length;
+      results.sheets_cabecalho = rows[0]?.slice(0, 5);
+      results.sheets_num_colunas = rows[0]?.length;
 
-  } catch (err) {
-    console.error('Erro:', err.message);
-    return res.status(500).json({ debug, error: err.message });
+      // Busca CPF
+      const cpf = (req.query?.cpf || '32859264817').replace(/\D/g, '');
+      let found = false;
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        // Normaliza linha
+        while (row.length < (rows[0]?.length || 64)) row.push('');
+        const cpfCell = (row[2] || '').replace(/\D/g, '');
+        if (cpfCell === cpf) {
+          found = true;
+          results.cpf_resultado = `ENCONTRADO na linha ${i+1}`;
+          results.cpf_dados = { siape: row[0], nome: row[1], cpf: row[2], email: row[10], telefone: row[12] };
+          break;
+        }
+      }
+      if (!found) results.cpf_resultado = `NÃO ENCONTRADO nas ${rows.length} linhas`;
+    }
+  } catch(err) {
+    results.erro = err.message;
   }
+
+  return res.status(200).json(results);
 }
