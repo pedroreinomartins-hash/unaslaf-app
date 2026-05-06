@@ -643,12 +643,6 @@
         <div class="form-card">
           <h2>📋 Meu Cadastro</h2>
           <div class="form-row">
-            <div class="form-group-inline" style="grid-column:1/-1">
-              <label>Nome completo <span style="color:var(--danger)">*</span></label>
-              <input type="text" id="cad-nome" placeholder="Nome completo" />
-            </div>
-          </div>
-          <div class="form-row">
             <div class="form-group-inline">
               <label>CPF <span class="readonly-label">🔒 bloqueado</span></label>
               <input type="text" id="cad-cpf" readonly />
@@ -657,6 +651,10 @@
               <label>SIAPE <span class="readonly-label">🔒 bloqueado</span></label>
               <input type="text" id="cad-siape" readonly />
             </div>
+          </div>
+          <div class="form-group-inline">
+            <label>Nome <span class="readonly-label">🔒 bloqueado</span></label>
+            <input type="text" id="cad-nome" readonly />
           </div>
           <div class="form-row">
             <div class="form-group-inline">
@@ -668,9 +666,19 @@
               <input type="text" id="cad-telefone" placeholder="5519991234567" />
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group-inline">
+              <label>Logradouro</label>
+              <input type="text" id="cad-logradouro" placeholder="Rua, Av., etc." />
+            </div>
+            <div class="form-group-inline">
+              <label>Número</label>
+              <input type="text" id="cad-numero" placeholder="Número" />
+            </div>
+          </div>
           <div class="form-group-inline">
-            <label>Endereço</label>
-            <input type="text" id="cad-endereco" placeholder="Rua, número, bairro" />
+            <label>Bairro</label>
+            <input type="text" id="cad-bairro" placeholder="Bairro" />
           </div>
           <div class="form-row">
             <div class="form-group-inline">
@@ -678,8 +686,18 @@
               <input type="text" id="cad-cidade" placeholder="Cidade" />
             </div>
             <div class="form-group-inline">
+              <label>CEP</label>
+              <input type="text" id="cad-cep" placeholder="00000-000" maxlength="9" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group-inline">
               <label>UF</label>
-              <input type="text" id="cad-uf" placeholder="DF" maxlength="2" />
+              <input type="text" id="cad-uf" placeholder="UF" maxlength="2" />
+            </div>
+            <div class="form-group-inline">
+              <label>Situação <span class="readonly-label">🔒 bloqueado</span></label>
+              <input type="text" id="cad-situacao" readonly />
             </div>
           </div>
           <button class="btn-salvar" id="btn-salvar" onclick="salvarCadastro()" disabled>
@@ -943,32 +961,35 @@ function sendChip(text) {
 // ═══════════════════════════════════════════════
 function preencherCadastro() {
   const a = STATE.associate;
-  document.getElementById('cad-nome').value     = a.nome     || '';
-  document.getElementById('cad-cpf').value      = a.cpf      || '';
-  document.getElementById('cad-siape').value    = a.siape    || '';
-  document.getElementById('cad-email').value    = a.email    || '';
-  document.getElementById('cad-telefone').value = a.telefone || '';
-  document.getElementById('cad-endereco').value = a.endereco || '';
-  document.getElementById('cad-cidade').value   = a.cidade   || '';
-  document.getElementById('cad-uf').value       = a.uf       || '';
+  document.getElementById('cad-cpf').value       = a.cpf        || '';
+  document.getElementById('cad-siape').value     = a.siape      || '';
+  document.getElementById('cad-nome').value      = a.nome       || '';
+  document.getElementById('cad-email').value     = a.email      || '';
+  document.getElementById('cad-telefone').value  = a.telefone   || '';
+  document.getElementById('cad-logradouro').value= a.logradouro || '';
+  document.getElementById('cad-numero').value    = a.numero     || '';
+  document.getElementById('cad-bairro').value    = a.bairro     || '';
+  document.getElementById('cad-cidade').value    = a.cidade     || '';
+  document.getElementById('cad-cep').value       = a.cep        || '';
+  document.getElementById('cad-uf').value        = a.uf         || '';
+  document.getElementById('cad-situacao').value  = a.situacao   || '';
   verificarBotaoSalvar();
 }
 
-['cad-nome', 'cad-email', 'cad-telefone'].forEach(id => {
+['cad-email', 'cad-telefone'].forEach(id => {
   document.getElementById(id).addEventListener('input', verificarBotaoSalvar);
 });
 
 function verificarBotaoSalvar() {
-  const nome     = document.getElementById('cad-nome').value.trim();
   const email    = document.getElementById('cad-email').value.trim();
   const telefone = document.getElementById('cad-telefone').value.trim();
 
-  ['cad-nome', 'cad-email', 'cad-telefone'].forEach(id => {
+  ['cad-email', 'cad-telefone'].forEach(id => {
     const el = document.getElementById(id);
     el.classList.toggle('required-empty', !el.value.trim());
   });
 
-  document.getElementById('btn-salvar').disabled = !(nome && email && telefone);
+  document.getElementById('btn-salvar').disabled = !(email && telefone);
 }
 
 async function salvarCadastro() {
@@ -978,14 +999,16 @@ async function salvarCadastro() {
   document.getElementById('save-msg').className = 'save-msg';
 
   const payload = {
-    cpf:      STATE.associate.cpf,
-    rowIndex: STATE.associate.rowIndex,
-    nome:     document.getElementById('cad-nome').value.trim(),
-    email:    document.getElementById('cad-email').value.trim(),
-    telefone: document.getElementById('cad-telefone').value.trim(),
-    endereco: document.getElementById('cad-endereco').value.trim(),
-    cidade:   document.getElementById('cad-cidade').value.trim(),
-    uf:       document.getElementById('cad-uf').value.trim().toUpperCase(),
+    cpf:        STATE.associate.cpf,
+    rowIndex:   STATE.associate.rowIndex,
+    email:      document.getElementById('cad-email').value.trim(),
+    telefone:   document.getElementById('cad-telefone').value.trim(),
+    logradouro: document.getElementById('cad-logradouro').value.trim(),
+    numero:     document.getElementById('cad-numero').value.trim(),
+    bairro:     document.getElementById('cad-bairro').value.trim(),
+    cidade:     document.getElementById('cad-cidade').value.trim(),
+    cep:        document.getElementById('cad-cep').value.trim(),
+    uf:         document.getElementById('cad-uf').value.trim().toUpperCase(),
   };
 
   try {
@@ -1002,7 +1025,6 @@ async function salvarCadastro() {
       msgEl.className = 'save-msg success';
       // Atualiza estado local
       STATE.associate = { ...STATE.associate, ...payload };
-      document.getElementById('topbar-nome').textContent = payload.nome.split(' ')[0];
     } else {
       const msgEl = document.getElementById('save-msg');
       msgEl.textContent = '❌ ' + (data.error || 'Erro ao salvar.');
